@@ -4,7 +4,7 @@ import { AppTokenAuthProvider } from '@twurple/auth';
 import { google } from 'googleapis';
 import axios from 'axios';
 import logger from '../../shared/utils/logger.js';
-import { Streamer, Stream } from '../../shared/database/models/index.js';
+import { getModels } from '../../shared/database/models/index.js';
 import { validateRPStream } from '../utils/rpValidator.js';
 import { notifyStreamStart, notifyStreamEnd } from './notificationService.js';
 
@@ -62,6 +62,7 @@ class StreamMonitor {
 
   async checkAllStreamers() {
     try {
+      const { Streamer } = getModels();
       const streamers = await Streamer.findAll({
         where: { is_active: true },
       });
@@ -174,7 +175,7 @@ class StreamMonitor {
         streamer_id: channelId,
         streamer_name: video.snippet.channelTitle,
         title: video.snippet.title,
-        game: video.snippet.categoryId || 'Gaming', // YouTube doesn't have game info
+        game: video.snippet.categoryId || 'Gaming',
         game_id: null,
         viewer_count: parseInt(video.liveStreamingDetails?.concurrentViewers || 0),
         thumbnail_url: video.snippet.thumbnails.maxres?.url || video.snippet.thumbnails.high.url,
@@ -190,7 +191,6 @@ class StreamMonitor {
 
   async checkKick(username) {
     try {
-      // Kick doesn't have an official API, using unofficial endpoint
       const response = await axios.get(`https://kick.com/api/v2/channels/${username}`);
       
       if (!response.data || !response.data.livestream) {
@@ -214,7 +214,6 @@ class StreamMonitor {
         tags: stream.tags || [],
       };
     } catch (error) {
-      // 404 means not live, don't log as error
       if (error.response?.status !== 404) {
         logger.error(`❌ Error verificando Kick para ${username}:`, error);
       }
@@ -226,13 +225,11 @@ class StreamMonitor {
     const wasLive = streamer.is_live;
 
     if (isLive && streamData) {
-      // Validate RP stream
       const isValidRP = await validateRPStream(streamData);
 
       if (!isValidRP) {
         logger.warn(`⚠️ Stream de ${streamer.display_name} no cumple requisitos de RP`);
         
-        // If was live with valid RP, end the stream
         if (wasLive) {
           await this.endStream(streamer);
         }
@@ -240,21 +237,19 @@ class StreamMonitor {
       }
 
       if (!wasLive) {
-        // Stream started
         await this.startStream(streamer, streamData);
       } else {
-        // Stream ongoing, update data
         await this.updateStream(streamer, streamData);
       }
     } else if (wasLive && !isLive) {
-      // Stream ended
       await this.endStream(streamer);
     }
   }
 
   async startStream(streamer, streamData) {
     try {
-      // Create stream record
+      const { Stream } = getModels();
+      
       const stream = await Stream.create({
         streamer_id: streamer.id,
         platform: streamData.platform,
@@ -268,7 +263,6 @@ class StreamMonitor {
         is_active: true,
       });
 
-      // Update streamer
       await streamer.update({
         is_live: true,
         current_stream_id: stream.id,
@@ -278,10 +272,8 @@ class StreamMonitor {
 
       logger.info(`🔴 ${streamer.display_name} comenzó stream en ${streamData.platform}`);
 
-      // Notify Discord
       await notifyStreamStart(streamer, streamData);
 
-      // Emit WebSocket event
       if (global.io) {
         global.io.to('streams').emit('stream:started', {
           streamer: streamer.toJSON(),
@@ -295,6 +287,7 @@ class StreamMonitor {
 
   async updateStream(streamer, streamData) {
     try {
+      const { Stream } = getModels();
       const stream = await Stream.findByPk(streamer.current_stream_id);
       if (!stream) return;
 
@@ -309,7 +302,6 @@ class StreamMonitor {
         viewer_count: streamData.viewer_count,
       });
 
-      // Emit WebSocket event
       if (global.io) {
         global.io.to('streams').emit('stream:updated', {
           streamer: streamer.toJSON(),
@@ -323,6 +315,7 @@ class StreamMonitor {
 
   async endStream(streamer) {
     try {
+      const { Stream } = getModels();
       const stream = await Stream.findByPk(streamer.current_stream_id);
       if (!stream) return;
 
@@ -339,10 +332,8 @@ class StreamMonitor {
 
       logger.info(`⚫ ${streamer.display_name} terminó stream`);
 
-      // Notify Discord
       await notifyStreamEnd(streamer, stream);
 
-      // Emit WebSocket event
       if (global.io) {
         global.io.to('streams').emit('stream:ended', {
           streamer: streamer.toJSON(),
@@ -365,6 +356,7 @@ const streamMonitor = new StreamMonitor();
 export const startStreamMonitor = () => streamMonitor.start();
 export const stopStreamMonitor = () => streamMonitor.stop();
 export const getActiveStreams = async () => {
+  const { Stream } = getModels();
   return await Stream.findAll({
     where: { is_active: true },
     include: ['streamer'],
