@@ -1,62 +1,27 @@
-# Base image with Node.js
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Install FFmpeg and other dependencies
-RUN apk add --no-cache \
-    ffmpeg \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    pixman-dev
+# Instalar FFmpeg y dependencias
+RUN apk add --no-cache ffmpeg python3 make g++
 
 WORKDIR /app
 
-# Copy package files
+# Copiar package.json
 COPY package*.json ./
 
-# Install dependencies
-FROM base AS dependencies
-RUN npm ci --only=production
-RUN cp -R node_modules /prod_node_modules
-RUN npm ci
+# USAR npm install (NO npm ci)
+RUN npm install --production
 
-# Build stage
-FROM base AS build
-COPY --from=dependencies /app/node_modules ./node_modules
+# Copiar código
 COPY . .
-RUN npm run build || true
 
-# Production stage
-FROM base AS production
+# Crear directorios
+RUN mkdir -p clips logs temp
 
-# Copy production dependencies
-COPY --from=dependencies /prod_node_modules ./node_modules
+# Variables
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Copy application files
-COPY --from=build /app/app ./app
-COPY --from=build /app/config ./config
-COPY --from=build /app/scripts ./scripts
-COPY package*.json ./
+EXPOSE 3000
 
-# Create necessary directories
-RUN mkdir -p /app/clips /app/logs /app/temp
-
-# Set permissions
-RUN chown -R node:node /app
-
-# Switch to non-root user
-USER node
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-# Expose ports
-EXPOSE 3000 3001
-
-# Start application
-CMD ["npm", "start"]
+# Iniciar app
+CMD ["node", "app/index.js"]
