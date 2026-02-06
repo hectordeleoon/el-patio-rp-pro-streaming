@@ -5,14 +5,19 @@ import OpenAI from 'openai';
 import path from 'path';
 import fs from 'fs/promises';
 import logger from '../../shared/utils/logger.js';
-import { Clip } from '../../shared/database/models/index.js';
+import { getModels } from '../../shared/database/models/index.js';
 import { calculateViralScore } from '../utils/viralScore.js';
 import { addSubtitles, addEffects, addBranding } from '../utils/videoEditor.js';
 import { convertToVertical } from '../utils/videoConverter.js';
 import { redisClient } from '../../shared/cache/redis.js';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const deepgram = process.env.DEEPGRAM_API_KEY 
+  ? createClient(process.env.DEEPGRAM_API_KEY)
+  : null;
 
 // Create clip processing queue
 const clipQueue = new Queue('clip-processing', {
@@ -100,6 +105,9 @@ class ClipProcessor {
         trigger,
       });
 
+      // Get models
+      const { Clip } = getModels();
+
       // Create clip record in database
       const clip = await Clip.create({
         streamer_id,
@@ -136,6 +144,7 @@ class ClipProcessor {
     try {
       logger.info(`✂️ Editando clip ${clip_id}...`);
 
+      const { Clip } = getModels();
       const clip = await Clip.findByPk(clip_id);
       if (!clip) throw new Error('Clip no encontrado');
 
@@ -197,6 +206,7 @@ class ClipProcessor {
     try {
       logger.info(`🔄 Convirtiendo clip ${clip_id}...`);
 
+      const { Clip } = getModels();
       const clip = await Clip.findByPk(clip_id);
       if (!clip) throw new Error('Clip no encontrado');
 
@@ -307,6 +317,11 @@ class ClipProcessor {
   }
 
   async transcribeAudio(videoPath) {
+    if (!deepgram) {
+      logger.warn('⚠️  Deepgram no configurado, saltando transcripción');
+      return null;
+    }
+
     try {
       // Extract audio
       const audioPath = videoPath.replace('.mp4', '.wav');
