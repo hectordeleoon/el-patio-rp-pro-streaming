@@ -2,6 +2,7 @@ import { Sequelize, DataTypes } from 'sequelize';
 import logger from '../../utils/logger.js';
 
 let sequelize;
+let models = {};
 
 // Streamer Model
 export const StreamerModel = {
@@ -369,17 +370,29 @@ export function initModels(sequelizeInstance) {
   Clip.hasMany(Publication, { foreignKey: 'clip_id', as: 'publications' });
   Publication.belongsTo(Clip, { foreignKey: 'clip_id', as: 'clip' });
 
-  logger.info('✅ Modelos de base de datos inicializados');
-
-  return {
+  // Store models for export
+  models = {
     Streamer,
     Stream,
     Clip,
     Publication,
     User,
   };
+
+  logger.info('✅ Modelos de base de datos inicializados');
+
+  return models;
 }
+
+// Export individual models (will be available after initModels is called)
+export const getModels = () => models;
+export const Streamer = () => models.Streamer;
+export const Stream = () => models.Stream;
+export const Clip = () => models.Clip;
+export const Publication = () => models.Publication;
+export const User = () => models.User;
 
 export default {
   initModels,
+  getModels,
 };
