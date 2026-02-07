@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import logger from './shared/utils/logger.js';
+import logger from '../utils/logger.js';
 import { initializeDatabase } from './shared/database/index.js';
 import { initializeRedis } from './shared/cache/redis.js';
 import DiscordBot from './bot/index.js';
