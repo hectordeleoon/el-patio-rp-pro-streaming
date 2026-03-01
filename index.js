@@ -1304,6 +1304,95 @@ webApp.post('/admin/check-streams', requireAdmin, async (req, res) => {
   }
 });
 
+// Buscar miembro en Discord por nombre/tag/id
+webApp.get('/admin/find-member', requireAdmin, async (req, res) => {
+  try {
+    const query = req.query.q?.toLowerCase().trim();
+    if (!query) return res.status(400).json({ error: 'Falta parámetro q' });
+
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (!guild) return res.status(500).json({ error: 'Guild no encontrado' });
+
+    await guild.members.fetch();
+    const members = guild.members.cache.filter(m =>
+      m.user.username.toLowerCase().includes(query) ||
+      m.displayName.toLowerCase().includes(query) ||
+      m.id === query
+    );
+
+    const results = members.map(m => ({
+      id: m.id,
+      username: m.user.username,
+      displayName: m.displayName,
+      avatar: m.user.displayAvatarURL({ size: 64 }),
+      hasStreamerRole: config.discord.streamerRoleId ? m.roles.cache.has(config.discord.streamerRoleId) : false,
+      isRegistered: storage.streamers.has(m.id),
+    })).slice(0, 10);
+
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Registrar streamer desde el dashboard
+webApp.post('/admin/register-streamer', requireAdmin, async (req, res) => {
+  try {
+    const { userId, platforms, bio, color } = req.body;
+    if (!userId) return res.status(400).json({ error: 'Falta userId' });
+
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (!guild) return res.status(500).json({ error: 'Guild no encontrado' });
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return res.status(404).json({ error: 'Miembro no encontrado en el servidor' });
+
+    if (storage.threads.has(userId)) {
+      return res.status(409).json({ error: 'Este usuario ya está registrado', threadId: storage.threads.get(userId) });
+    }
+
+    const cleanPlatforms = {
+      twitch: platforms?.twitch?.toLowerCase().trim() || null,
+      kick: platforms?.kick?.trim() || null,
+      youtube: platforms?.youtube?.trim() || null,
+      tiktok: platforms?.tiktok?.replace('@', '').trim() || null,
+    };
+
+    // Filtrar plataformas vacías
+    Object.keys(cleanPlatforms).forEach(k => { if (!cleanPlatforms[k]) delete cleanPlatforms[k]; });
+
+    if (Object.keys(cleanPlatforms).length === 0) {
+      return res.status(400).json({ error: 'Debes agregar al menos una plataforma' });
+    }
+
+    const thread = await createStreamerThread(member, cleanPlatforms, bio || '', color || '#9146FF');
+    await saveStorage();
+
+    console.log(`✅ Streamer registrado desde dashboard: ${member.displayName}`);
+    res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Eliminar streamer desde el dashboard
+webApp.delete('/admin/streamer/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!storage.streamers.has(userId)) return res.status(404).json({ error: 'Streamer no encontrado' });
+
+    storage.streamers.delete(userId);
+    storage.threads.delete(userId);
+    storage.liveStreams.forEach((_, key) => { if (key.includes(userId)) storage.liveStreams.delete(key); });
+    await saveStorage();
+
+    console.log(`🗑️ Streamer eliminado desde dashboard: ${userId}`);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Iniciar servidor
 webApp.listen(config.port, () => {
   console.log(`🚀 Web server en puerto ${config.port}`);
