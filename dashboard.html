@@ -741,6 +741,9 @@
       <div class="nav-item" onclick="showPanel('streamers')">
         <span>🎮</span><span>Streamers</span>
       </div>
+      <div class="nav-item" onclick="showPanel('registrar')">
+        <span>➕</span><span>Registrar</span>
+      </div>
       <div class="nav-section">Configuración</div>
       <div class="nav-item" onclick="showPanel('config')">
         <span>⚙️</span><span>Config</span>
@@ -912,6 +915,65 @@
         </div>
       </div>
 
+
+      <!-- Registrar Streamer -->
+      <div class="panel" id="panel-registrar">
+        <div class="card">
+          <div class="card-title">➕ Registrar Nuevo Streamer</div>
+          <div style="margin-bottom:20px;">
+            <label style="font-size:0.85rem;color:var(--muted);display:block;margin-bottom:8px;">🔍 Buscar usuario de Discord</label>
+            <div style="display:flex;gap:10px;">
+              <input type="text" id="search-user-input" placeholder="Nombre, apodo o ID del usuario..." style="flex:1;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.95rem;outline:none;">
+              <button class="btn btn-primary" onclick="searchUser()">Buscar</button>
+            </div>
+            <div id="search-results" style="margin-top:10px;display:none;"></div>
+          </div>
+          <div id="selected-user-box" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img id="sel-avatar" src="" style="width:48px;height:48px;border-radius:50%;background:var(--bg);">
+              <div>
+                <div id="sel-name" style="font-weight:600;font-size:1rem;"></div>
+                <div id="sel-id" style="font-size:0.75rem;color:var(--muted);"></div>
+                <div id="sel-status" style="font-size:0.75rem;margin-top:4px;"></div>
+              </div>
+              <button class="btn" onclick="clearSelectedUser()" style="margin-left:auto;">✖ Cambiar</button>
+            </div>
+          </div>
+          <div id="register-form" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+              <div>
+                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">🟣 Twitch</label>
+                <input type="text" id="reg-twitch" placeholder="ej: juanito_rp" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">🟢 Kick</label>
+                <input type="text" id="reg-kick" placeholder="ej: juanito" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">⚫ TikTok (sin @)</label>
+                <input type="text" id="reg-tiktok" placeholder="ej: juanito_rp" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">🔴 YouTube (@usuario)</label>
+                <input type="text" id="reg-youtube" placeholder="ej: @juanito" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
+              </div>
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">📝 Biografía (opcional)</label>
+              <input type="text" id="reg-bio" placeholder="Streamer de GTA V RP..." style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;outline:none;">
+            </div>
+            <div style="margin-bottom:20px;">
+              <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px;">🎨 Color del perfil</label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="color" id="reg-color" value="#9146FF" style="width:48px;height:40px;border:none;background:none;cursor:pointer;">
+                <span style="font-size:0.85rem;color:var(--muted);">Color del hilo en el foro</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="submitRegister()" style="width:100%;padding:14px;font-size:1rem;">✅ Registrar Streamer y Asignar Rol</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Logs -->
       <div class="panel" id="panel-logs">
         <div class="card">
@@ -990,6 +1052,7 @@ const panelTitles = {
   dashboard: '📊 Dashboard',
   live: '🔴 En Vivo',
   streamers: '🎮 Streamers',
+  registrar: '➕ Registrar Streamer',
   config: '⚙️ Configuración',
   logs: '📋 Logs'
 };
@@ -1010,7 +1073,7 @@ function showPanel(name) {
 async function refreshAll() {
   try {
     const [statusR, liveR] = await Promise.all([
-      fetch(`${API}/`),
+      fetch(`${API}/api/status`),
       fetch(`${API}/live`)
     ]);
     
@@ -1246,6 +1309,131 @@ function fmtUptime(s) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// ─── REGISTRAR STREAMER ───
+let selectedUserId = null;
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('search-user-input') === document.activeElement) {
+    searchUser();
+  }
+});
+
+async function searchUser() {
+  const q = document.getElementById('search-user-input').value.trim();
+  if (!q) return toast('Escribe un nombre o ID para buscar', 'error');
+
+  const resultsBox = document.getElementById('search-results');
+  resultsBox.style.display = 'block';
+  resultsBox.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">Buscando...</div>';
+
+  try {
+    const r = await fetch(`${API}/admin/find-member?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
+    const members = await r.json();
+
+    if (!Array.isArray(members) || members.length === 0) {
+      resultsBox.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px;">❌ No se encontraron usuarios</div>';
+      return;
+    }
+
+    resultsBox.innerHTML = members.map(m => `
+      <div onclick="selectUser('${m.id}','${m.displayName}','${m.avatar}',${m.isRegistered},${m.hasStreamerRole})"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;
+               background:var(--bg3);border:1px solid var(--border);margin-bottom:6px;transition:background 0.15s;"
+        onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg3)'">
+        <img src="${m.avatar}" style="width:36px;height:36px;border-radius:50%;" onerror="this.src=''">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.9rem;">${m.displayName}</div>
+          <div style="font-size:0.75rem;color:var(--muted);">@${m.username} • ${m.id}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${m.isRegistered ? '<span style="font-size:0.7rem;background:rgba(0,229,200,0.1);color:var(--success);padding:3px 8px;border-radius:6px;">Ya registrado</span>' : ''}
+          ${m.hasStreamerRole ? '<span style="font-size:0.7rem;background:rgba(124,92,255,0.15);color:var(--accent);padding:3px 8px;border-radius:6px;">Rol streamer</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    resultsBox.innerHTML = '<div style="color:var(--danger);font-size:0.85rem;padding:8px;">❌ Error al buscar</div>';
+  }
+}
+
+function selectUser(id, name, avatar, isRegistered, hasRole) {
+  selectedUserId = id;
+
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('selected-user-box').style.display = 'block';
+  document.getElementById('sel-avatar').src = avatar;
+  document.getElementById('sel-name').textContent = name;
+  document.getElementById('sel-id').textContent = 'ID: ' + id;
+
+  let statusHtml = '';
+  if (isRegistered) {
+    statusHtml = '<span style="color:var(--warn);">⚠️ Este usuario ya está registrado</span>';
+  } else {
+    statusHtml = '<span style="color:var(--success);">✅ Listo para registrar</span>';
+    if (!hasRole) statusHtml += ' <span style="color:var(--muted);">(se le asignará el rol de streamer)</span>';
+  }
+  document.getElementById('sel-status').innerHTML = statusHtml;
+
+  if (!isRegistered) {
+    document.getElementById('register-form').style.display = 'block';
+  } else {
+    document.getElementById('register-form').style.display = 'none';
+  }
+}
+
+function clearSelectedUser() {
+  selectedUserId = null;
+  document.getElementById('selected-user-box').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('search-user-input').value = '';
+  document.getElementById('search-results').style.display = 'none';
+}
+
+async function submitRegister() {
+  if (!selectedUserId) return toast('Selecciona un usuario primero', 'error');
+
+  const platforms = {
+    twitch: document.getElementById('reg-twitch').value.trim() || null,
+    kick: document.getElementById('reg-kick').value.trim() || null,
+    tiktok: document.getElementById('reg-tiktok').value.trim() || null,
+    youtube: document.getElementById('reg-youtube').value.trim() || null,
+  };
+
+  const filled = Object.values(platforms).filter(Boolean);
+  if (filled.length === 0) return toast('Agrega al menos una plataforma', 'error');
+
+  const bio = document.getElementById('reg-bio').value.trim();
+  const color = document.getElementById('reg-color').value;
+
+  toast('⏳ Registrando streamer...');
+
+  try {
+    const r = await fetch(`${API}/admin/register-streamer`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ userId: selectedUserId, platforms, bio, color }),
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      return toast('❌ ' + (data.error || 'Error al registrar'), 'error');
+    }
+
+    toast(`✅ ${data.displayName} registrado correctamente y rol asignado`, 'success');
+
+    // Limpiar formulario
+    clearSelectedUser();
+    ['reg-twitch','reg-kick','reg-tiktok','reg-youtube','reg-bio'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('reg-color').value = '#9146FF';
+
+  } catch (e) {
+    toast('❌ Error de conexión', 'error');
+  }
 }
 </script>
 
