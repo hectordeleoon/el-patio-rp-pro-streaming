@@ -969,7 +969,8 @@
                 <span style="font-size:0.85rem;color:var(--muted);">Color del hilo en el foro</span>
               </div>
             </div>
-            <button class="btn btn-primary" onclick="submitRegister()" style="width:100%;padding:14px;font-size:1rem;">✅ Registrar Streamer y Asignar Rol</button>
+            <div id="verify-results" style="display:none;margin-bottom:16px;"></div>
+            <button class="btn btn-primary" onclick="submitRegister()" style="width:100%;padding:14px;font-size:1rem;">✅ Verificar y Registrar Streamer</button>
           </div>
         </div>
       </div>
@@ -1401,15 +1402,58 @@ async function submitRegister() {
     youtube: document.getElementById('reg-youtube').value.trim() || null,
   };
 
-  const filled = Object.values(platforms).filter(Boolean);
+  const filled = Object.values(platforms).filter(v => v);
   if (filled.length === 0) return toast('Agrega al menos una plataforma', 'error');
 
   const bio = document.getElementById('reg-bio').value.trim();
   const color = document.getElementById('reg-color').value;
+  const verifyBox = document.getElementById('verify-results');
 
-  toast('⏳ Registrando streamer...');
+  // Paso 1: Verificar plataformas
+  toast('🔍 Verificando usuarios en las plataformas...');
+  verifyBox.style.display = 'block';
+  verifyBox.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">Verificando...</div>';
 
   try {
+    const vr = await fetch(`${API}/admin/verify-platforms`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ platforms }),
+    });
+    const verifyData = await vr.json();
+
+    // Mostrar resultados de verificación
+    const platEmojis = { twitch: '🟣', kick: '🟢', tiktok: '⚫', youtube: '🔴' };
+    let allOk = true;
+    let verifyHtml = '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">';
+
+    for (const [plat, result] of Object.entries(verifyData)) {
+      const ok = result.exists;
+      if (!ok) allOk = false;
+      const icon = ok ? '✅' : '❌';
+      const color2 = ok ? 'var(--success)' : 'var(--danger)';
+      const msg = ok
+        ? (result.displayName ? `${result.displayName}` : 'Encontrado') + (result.warning ? ` ⚠️ ${result.warning}` : '')
+        : result.error;
+      verifyHtml += `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-radius:8px;border:1px solid ${ok ? 'rgba(0,229,200,0.2)' : 'rgba(255,68,68,0.3)'};">
+          <span style="font-size:1.1rem;">${platEmojis[plat]}</span>
+          <span style="font-weight:600;text-transform:capitalize;flex:1;">${plat}</span>
+          <span style="color:${color2};font-size:0.85rem;">${icon} ${msg}</span>
+        </div>`;
+    }
+    verifyHtml += '</div>';
+
+    if (!allOk) {
+      verifyBox.innerHTML = verifyHtml + '<div style="color:var(--danger);font-size:0.85rem;padding:8px 0;">❌ Corrige los usuarios marcados en rojo antes de registrar.</div>';
+      toast('❌ Algunos usuarios no existen en sus plataformas', 'error');
+      return;
+    }
+
+    verifyBox.innerHTML = verifyHtml;
+    toast('✅ Todos los usuarios verificados, registrando...');
+
+    // Paso 2: Registrar
     const r = await fetch(`${API}/admin/register-streamer`, {
       method: 'POST',
       headers: authHeaders(),
@@ -1419,10 +1463,16 @@ async function submitRegister() {
     const data = await r.json();
 
     if (!r.ok) {
+      if (data.failed) {
+        // Error de verificación del servidor (doble check)
+        const msgs = data.failed.map(f => `${f.platform}: ${f.reason}`).join(' | ');
+        return toast('❌ ' + msgs, 'error');
+      }
       return toast('❌ ' + (data.error || 'Error al registrar'), 'error');
     }
 
     toast(`✅ ${data.displayName} registrado correctamente y rol asignado`, 'success');
+    verifyBox.style.display = 'none';
 
     // Limpiar formulario
     clearSelectedUser();
