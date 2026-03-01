@@ -1336,6 +1336,76 @@ webApp.get('/admin/find-member', requireAdmin, async (req, res) => {
 });
 
 // Registrar streamer desde el dashboard
+// Verificar si un usuario existe en una plataforma
+async function verifyPlatformUser(platform, username) {
+  const clean = username.replace('@', '').trim().toLowerCase();
+  try {
+    if (platform === 'twitch') {
+      const token = await getTwitchToken();
+      if (!token) return { exists: false, error: 'Sin credenciales Twitch' };
+      const r = await axios.get('https://api.twitch.tv/helix/users', {
+        headers: { 'Client-ID': config.twitch.clientId, 'Authorization': `Bearer ${token}` },
+        params: { login: clean },
+        timeout: 8000,
+      });
+      const user = r.data?.data?.[0];
+      return user
+        ? { exists: true, displayName: user.display_name, avatar: user.profile_image_url }
+        : { exists: false, error: `"${username}" no encontrado en Twitch` };
+    }
+    if (platform === 'kick') {
+      const r = await axios.get(`https://kick.com/api/v2/channels/${clean}`, {
+        timeout: 8000,
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      });
+      const data = r.data?.data || r.data;
+      return data?.id
+        ? { exists: true, displayName: data.user?.username || clean }
+        : { exists: false, error: `"${username}" no encontrado en Kick` };
+    }
+    if (platform === 'tiktok') {
+      const r = await axios.get(`https://www.tiktok.com/@${clean}`, {
+        timeout: 10000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      });
+      const exists = r.status === 200 && r.data?.includes(clean);
+      return exists
+        ? { exists: true, displayName: clean }
+        : { exists: false, error: `"@${username}" no encontrado en TikTok` };
+    }
+    if (platform === 'youtube') {
+      if (!config.youtube.apiKey) return { exists: true, displayName: username, warning: 'Sin API Key, no verificado' };
+      const r = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+        params: { part: 'snippet', q: clean, type: 'channel', key: config.youtube.apiKey, maxResults: 1 },
+        timeout: 8000,
+      });
+      const ch = r.data?.items?.[0];
+      return ch
+        ? { exists: true, displayName: ch.snippet.channelTitle }
+        : { exists: false, error: `"${username}" no encontrado en YouTube` };
+    }
+    return { exists: false, error: 'Plataforma desconocida' };
+  } catch (e) {
+    if (e.response?.status === 404) return { exists: false, error: `"${username}" no encontrado en ${platform}` };
+    return { exists: true, warning: `No se pudo verificar ${platform}: ${e.message}` };
+  }
+}
+
+webApp.post('/admin/verify-platforms', requireAdmin, async (req, res) => {
+  try {
+    const { platforms } = req.body;
+    const results = {};
+    const checks = [];
+    if (platforms.twitch) checks.push(verifyPlatformUser('twitch', platforms.twitch).then(r => { results.twitch = r; }));
+    if (platforms.kick)   checks.push(verifyPlatformUser('kick',   platforms.kick).then(r =>   { results.kick = r; }));
+    if (platforms.tiktok) checks.push(verifyPlatformUser('tiktok', platforms.tiktok).then(r => { results.tiktok = r; }));
+    if (platforms.youtube)checks.push(verifyPlatformUser('youtube',platforms.youtube).then(r =>{ results.youtube = r; }));
+    await Promise.allSettled(checks);
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 webApp.post('/admin/register-streamer', requireAdmin, async (req, res) => {
   try {
     const { userId, platforms, bio, color } = req.body;
@@ -1365,11 +1435,29 @@ webApp.post('/admin/register-streamer', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Debes agregar al menos una plataforma' });
     }
 
+    // ✅ Verificar que los usuarios existan en cada plataforma
+    console.log(`🔍 Verificando plataformas para ${member.displayName}...`);
+    const verifyResults = {};
+    const verifyChecks = [];
+    Object.entries(cleanPlatforms).forEach(([plat, user]) => {
+      verifyChecks.push(verifyPlatformUser(plat, user).then(r => { verifyResults[plat] = r; }));
+    });
+    await Promise.allSettled(verifyChecks);
+
+    const failed = Object.entries(verifyResults).filter(([, r]) => !r.exists);
+    if (failed.length > 0) {
+      return res.status(400).json({
+        error: 'Algunos usuarios no existen en sus plataformas',
+        failed: failed.map(([plat, r]) => ({ platform: plat, reason: r.error })),
+        verified: verifyResults,
+      });
+    }
+
     const thread = await createStreamerThread(member, cleanPlatforms, bio || '', color || '#9146FF');
     await saveStorage();
 
     console.log(`✅ Streamer registrado desde dashboard: ${member.displayName}`);
-    res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
+    res.json({ ok: true, threadId: thread.id, displayName: member.displayName, verified: verifyResults });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
