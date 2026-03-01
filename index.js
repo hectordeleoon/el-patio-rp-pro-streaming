@@ -1217,11 +1217,15 @@ console.error = (...args) => {
 
 // Endpoints
 // Dashboard HTML
+webApp.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "dashboard.html"));
+});
+
 webApp.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
 
-webApp.get('/', (req, res) => {
+webApp.get("/api/status", (req, res) => {
   let totalHours = 0, totalStreams = 0;
   for (const [, d] of storage.streamers.entries()) {
     totalHours += d.stats?.totalHours || 0;
