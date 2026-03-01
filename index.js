@@ -699,7 +699,7 @@ async function sendLiveNotification(platform, member, username, streamData, stre
       .setColor(plat.color)
       .setAuthor({ 
         name: `${member.displayName} está en vivo!`, 
-        iconURL: member.user.displayAvatarURL({ dynamic: true }) 
+        iconURL: member.user.displayAvatarURL({ forceStatic: false }) 
       })
       .setTitle(`🔴 ${streamData.title || 'Sin título'}`)
       .setURL(streamData.streamUrl)
@@ -788,7 +788,7 @@ async function createStreamerThread(member, platforms, bio, color) {
   const embed = new EmbedBuilder()
     .setColor(streamerColor)
     .setTitle(`🎮 ${member.displayName}`)
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+    .setThumbnail(member.user.displayAvatarURL({ forceStatic: false, size: 256 }))
     .setDescription(bio || '*Sin biografía*');
   
   let platformsText = '';
@@ -881,7 +881,7 @@ const commands = [
 //                    EVENTOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║     🔥 EL PATIO BOT STREAM v7.0 — ULTRA NOTIFIER 🔥       ║');
   console.log('╚════════════════════════════════════════════════════════════╝');
@@ -1027,7 +1027,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
           .setColor(data.color || '#9146FF')
           .setTitle(`📊 Stats de ${targetUser.username}`)
-          .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+          .setThumbnail(targetUser.displayAvatarURL({ forceStatic: false }))
           .addFields(
             { name: '📺 Streams', value: (stats.totalStreams || 0).toString(), inline: true },
             { name: '⏱️ Horas', value: `${(stats.totalHours || 0).toFixed(1)}h`, inline: true },
@@ -1086,7 +1086,8 @@ client.on('interactionCreate', async (interaction) => {
         .setDescription('Streamers transmitiendo ahora mismo:');
       
       for (const [key, data] of storage.liveStreams.entries()) {
-        const [, userId] = key.split('-');
+        const firstDash = key.indexOf('-');
+        const userId = key.substring(firstDash + 1);
         const member = await guild.members.fetch(userId).catch(() => null);
         const name = member?.displayName || userId;
         
