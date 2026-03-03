@@ -1,7 +1,7 @@
 {
   "name": "el-patio-bot-stream",
-  "version": "7.0.0",
-  "description": "El Patio Bot Stream - Notificador de streams para Twitch, Kick, TikTok, YouTube",
+  "version": "8.3.0",
+  "description": "El Patio Bot Stream - Notificador de streams con IA para Twitch, Kick, TikTok, YouTube",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,19 +13,13 @@
     "axios": "^1.7.2",
     "discord-api-types": "^0.37.0",
     "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": [
-    "discord-bot",
-    "twitch",
-    "kick",
-    "tiktok",
-    "youtube",
-    "stream-notifications"
-  ],
+  "keywords": ["discord-bot", "twitch", "kick", "tiktok", "youtube", "stream-notifications", "groq", "ia"],
   "author": "El Patio RP",
   "license": "MIT"
 }
