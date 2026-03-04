@@ -1056,92 +1056,227 @@ webApp.get('/api/pending-registrations', requireAdmin, (req,res)=>{
   res.json([...storage.pendingRegistrations.entries()].map(([uid,d])=>({uid,...d})));
 });
 
-webApp.post('/api/approve-registration/:uid', requireAdmin, async (req,res)=>{
+webApp.post('/api/approve-registration/:uid', requireAdmin, async (req, res) => {
   try {
     const { uid } = req.params;
     const pending = storage.pendingRegistrations.get(uid);
     if (!pending) return res.status(404).json({ error: 'Solicitud no encontrada' });
-    const guild  = client.guilds.cache.get(config.discord.guildId);
+    
+    const guild = client.guilds.cache.get(config.discord.guildId);
     const member = await guild.members.fetch(uid).catch(() => null);
     if (!member) return res.status(404).json({ error: 'Miembro no encontrado en el server' });
+    
     const thread = await createStreamerThread(member, pending.platforms, pending.bio, '#9146FF');
     storage.pendingRegistrations.delete(uid);
     saveStorage();
+    
     res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
+  } catch (e) { 
+    res.status(500).json({ error: e.message }); 
+  }
+});
+
+webApp.post('/api/reject-registration/:uid', requireAdmin, (req, res) => {
+  try {
+    const { uid } = req.params;
+    if (!storage.pendingRegistrations.has(uid)) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+    storage.pendingRegistrations.delete(uid);
+    saveStorage();
+    res.json({ ok: true, message: 'Solicitud rechazada' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-webApp.post('/api/reject-registration/:uid', requireAdmin, (req,res)=>{
-  storage.pendingRegistrations.delete(req.params.uid);
-  saveStorage();
-  res.json({ ok: true });
+webApp.get('/api/streamers', requireAdmin, (req, res) => {
+  const list = [];
+  for (const [uid, data] of storage.streamers.entries()) {
+    list.push({
+      uid,
+      ...data,
+      coins: getCoins(uid),
+      isLive: [...storage.liveStreams.keys()].some(k => k.includes(uid)),
+      weeklyStats: storage.weeklyStats.get(uid) || {},
+      economy: storage.economy.get(uid) || { coins: 0 }
+    });
+  }
+  res.json(list);
 });
 
-webApp.post('/admin/register-streamer', requireAdmin, async (req,res)=>{
-  const {userId,platforms,bio,color}=req.body||{};
-  if (!userId) return res.status(400).json({error:'Falta userId'});
+webApp.delete('/api/streamer/:uid', requireAdminOnly, async (req, res) => {
   try {
-    const guild=client.guilds.cache.get(config.discord.guildId);
-    const member=await guild?.members.fetch(userId).catch(()=>null);
-    if (!member) return res.status(404).json({error:'Miembro no encontrado'});
-    if (storage.streamers.has(userId)) return res.status(409).json({error:'Ya registrado'});
+    const { uid } = req.params;
+    if (!storage.streamers.has(uid)) {
+      return res.status(404).json({ error: 'Streamer no encontrado' });
+    }
     
-    const thread=await createStreamerThread(member,platforms||{},bio||'',color||'#9146FF');
+    // Eliminar hilo
+    const threadId = storage.threads.get(uid);
+    if (threadId) {
+      try {
+        const guild = client.guilds.cache.get(config.discord.guildId);
+        const thread = await guild.channels.fetch(threadId).catch(() => null);
+        if (thread) await thread.delete('Eliminado por admin');
+      } catch (e) { console.error('Error eliminando hilo:', e); }
+    }
+    
+    // Quitar rol
+    try {
+      const guild = client.guilds.cache.get(config.discord.guildId);
+      const member = await guild.members.fetch(uid).catch(() => null);
+      if (member && config.discord.streamerRoleId) {
+        await member.roles.remove(config.discord.streamerRoleId);
+      }
+    } catch (e) { console.error('Error quitando rol:', e); }
+    
+    storage.streamers.delete(uid);
+    storage.threads.delete(uid);
+    storage.achievements.delete(uid);
     saveStorage();
-    res.json({ok:true,threadId:thread.id,displayName:member.displayName});
-  } catch(e) { res.status(500).json({error:e.message}); }
+    
+    res.json({ ok: true, message: 'Streamer eliminado' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-webApp.delete('/admin/streamer/:userId', requireAdminOnly, async (req,res)=>{
-  const uid=req.params.userId;
-  if (!storage.streamers.has(uid)) return res.status(404).json({error:'No encontrado'});
-  storage.streamers.delete(uid);
-  storage.threads.delete(uid);
-  saveStorage();
-  
+webApp.post('/api/update-economy', requireAdmin, (req, res) => {
   try {
-    const guild=client.guilds.cache.get(config.discord.guildId);
-    const member=await guild?.members.fetch(uid).catch(()=>null);
-    if (member&&config.discord.streamerRoleId) await member.roles.remove(config.discord.streamerRoleId).catch(()=>{});
-  } catch {}
-  res.json({ok:true});
+    const { uid, amount, reason } = req.body;
+    if (!uid || !amount) return res.status(400).json({ error: 'Faltan datos' });
+    
+    const newBalance = addCoins(uid, parseInt(amount), reason || 'Ajuste manual por admin');
+    res.json({ ok: true, newBalance, uid });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-webApp.get('/admin/logs', requireAdmin, (req,res)=>{
-  res.json({logs:webLogs.slice(-200)});
+webApp.get('/api/economy/:uid', requireAdmin, (req, res) => {
+  const { uid } = req.params;
+  const data = storage.economy.get(uid) || { coins: 0, transactions: [] };
+  res.json(data);
 });
 
-webApp.post('/admin/check-streams', requireAdmin, async (req,res)=>{
-  await checkAllStreams().catch(()=>{});
-  res.json({ok:true,liveCount:storage.liveStreams.size});
+webApp.get('/api/stats/weekly', requireAdmin, (req, res) => {
+  const stats = [];
+  for (const [uid, data] of storage.weeklyStats.entries()) {
+    const streamer = storage.streamers.get(uid);
+    stats.push({
+      uid,
+      displayName: streamer?.displayName || uid,
+      ...data
+    });
+  }
+  res.json(stats.sort((a, b) => (b.peakViewers || 0) - (a.peakViewers || 0)));
 });
 
-// ── SERVIR ARCHIVOS ───────────────────────────────────────────────────────────
-webApp.get('/', (req,res)=>res.sendFile(path.join(__dirname,'dashboard.html')));
-webApp.get('/portal', (req,res)=>res.sendFile(path.join(__dirname,'portal.html')));
+webApp.post('/api/tournament', requireAdminOnly, (req, res) => {
+  try {
+    const { name, metric, duration, prize, description } = req.body;
+    const id = Date.now().toString();
+    
+    storage.tournaments.set(id, {
+      id,
+      name,
+      metric,
+      startTime: Date.now(),
+      endTime: Date.now() + (duration * 3600000),
+      prize,
+      description,
+      participants: [],
+      status: 'active'
+    });
+    
+    saveStorage();
+    res.json({ ok: true, tournamentId: id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ARRANQUE
-// ═══════════════════════════════════════════════════════════════════════════════
+webApp.get('/api/tournaments', requireAdmin, (req, res) => {
+  res.json([...storage.tournaments.values()]);
+});
+
+webApp.post('/api/broadcast', requireAdmin, async (req, res) => {
+  try {
+    const { message, channelType } = req.body;
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    
+    let channelId;
+    switch(channelType) {
+      case 'general': channelId = config.discord.generalChannelId; break;
+      case 'live': channelId = config.discord.liveChannelId; break;
+      case 'admin': channelId = config.discord.adminChannelId; break;
+      default: channelId = config.discord.notificationsChannelId;
+    }
+    
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.status(404).json({ error: 'Canal no encontrado' });
+    
+    await channel.send({ content: message });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.get('/api/logs', requireAdmin, (req, res) => {
+  res.json(webLogs.slice(-100));
+});
+
+webApp.post('/api/config', requireAdminOnly, (req, res) => {
+  try {
+    const { checkInterval, cooldownMinutes } = req.body;
+    if (checkInterval) config.notifications.checkInterval = parseInt(checkInterval);
+    if (cooldownMinutes) config.notifications.cooldownMinutes = parseInt(cooldownMinutes);
+    res.json({ ok: true, config: config.notifications });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Health check
+webApp.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    discord: client.user ? 'connected' : 'disconnected',
+    wsPing: client.ws.ping
+  });
+});
+
+// STARTUP
 client.once('ready', async () => {
-  console.log('╔═══════════════════════════════════════════════════╗');
-  console.log('║   🔥 EL PATIO BOT STREAM v9.2 — STAFF EDITION    ║');
-  console.log('╚═══════════════════════════════════════════════════╝');
-  console.log(`✅ Bot: ${client.user.tag}`);
-  console.log(`📡 Servidor: ${config.discord.guildId}`);
-  console.log(`🔑 Admin: ${config.adminKey.substring(0,3)}***`);
+  console.log(`🤖 ${client.user.tag} listo!`);
+  console.log(`📊 Versión: 9.2 Ultra Notifier`);
+  console.log(`🌐 Web dashboard: http://localhost:${config.port}`);
+  
   loadStorage();
   await registerCommands();
+  
+  // Iniciar loop de verificación
   setInterval(checkAllStreams, config.notifications.checkInterval);
-  setInterval(saveStorage, 300000);
-  setTimeout(checkAllStreams, 8000);
-  console.log(`✅ Bot listo • Verificando cada ${config.notifications.checkInterval/1000}s`);
+  console.log(`🔄 Verificación cada ${config.notifications.checkInterval/1000}s`);
+  
+  // Iniciar servidor web
+  webApp.listen(config.port, () => {
+    console.log(`🌐 Dashboard activo en puerto ${config.port}`);
+  });
 });
 
-webApp.listen(config.port, ()=>{
-  console.log(`🌐 Dashboard Admin: http://localhost:${config.port}`);
-  console.log(`👤 Portal Streamers: http://localhost:${config.port}/portal`);
+client.on('error', (e) => logError('Discord Client', e));
+client.on('warn', (w) => console.warn('⚠️ Discord:', w));
+
+// Manejo de cierre graceful
+process.on('SIGINT', () => {
+  console.log('\n👋 Cerrando bot...');
+  saveStorage();
+  client.destroy();
+  process.exit(0);
 });
 
-if (!config.discord.token) { console.error('❌ DISCORD_TOKEN no configurado'); process.exit(1); }
-client.login(config.discord.token).catch(e=>{ console.error('❌ Error login:', e.message); process.exit(1); });
+process.on('SIGTERM', () => {
+  console.log('\n👋 Cerrando por SIGTERM...');
+  saveStorage();
+  client.destroy();
+  process.exit(0);
+});
+
+// Login
+client.login(config.discord.token).catch(e => {
+  console.error('❌ Error login:', e.message);
+  process.exit(1);
+});
