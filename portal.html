@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👤 Portal Streamer — El Patio RP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070d;--bg2:#0f0f18;--bg3:#161622;--card:#111119;
+  --border:rgba(120,80,255,0.18);--accent:#7c5cff;--accent2:#ff4f9b;
+  --text:#e4e4ff;--muted:#5e5e7a;--success:#00e5c8;
+  --danger:#ff3d3d;--warn:#ffb700;--info:#38b6ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 20%,#180d3a 0%,var(--bg) 65%);z-index:200;}
+.lbox{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:52px 44px;width:420px;text-align:center;}
+.llogo{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.lsub{color:var(--muted);font-size:0.82rem;margin:6px 0 30px;}
+.lbox input{width:100%;padding:13px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.95rem;margin-bottom:14px;outline:none;}
+.lbox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.18);}
+.lbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-size:.95rem;font-weight:600;cursor:pointer;}
+.app{display:none;max-width:1200px;margin:0 auto;padding:20px;}
+.app.on{display:block;}
+
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+h1{font-size:1.5rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.user-info{display:flex;align-items:center;gap:12px;}
+.avatar{width:42px;height:42px;border-radius:50%;border:2px solid var(--accent);}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.card h2{font-size:1rem;color:var(--muted);margin-bottom:15px;text-transform:uppercase;letter-spacing:0.05em;font-size:0.75rem;}
+.stat-big{font-size:2.5rem;font-weight:700;color:var(--accent);margin:10px 0;}
+.stat-label{color:var(--muted);font-size:0.85rem;}
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,61,61,0.15);color:var(--danger);padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;margin-bottom:10px;}
+.live-dot{width:6px;height:6px;background:var(--danger);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.rank-item{display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg3);border-radius:8px;margin-bottom:8px;}
+.rank-pos{font-size:1.2rem;font-weight:700;width:30px;text-align:center;color:var(--muted);}
+.rank-pos.gold{color:#FFD700;}.rank-pos.silver{color:#C0C0C0;}.rank-pos.bronze{color:#CD7F32;}
+.rank-name{flex:1;font-weight:600;}.rank-score{color:var(--accent);font-weight:700;}
+
+.clips-list{display:flex;flex-direction:column;gap:8px;}
+.clip-item{background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent);}
+.clip-title{font-weight:600;margin-bottom:4px;font-size:0.9rem;}
+.clip-meta{font-size:0.75rem;color:var(--muted);}
+.viral-badge{background:rgba(255,107,0,0.15);color:var(--warn);padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:600;}
+
+.platforms{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px;}
+.plat-tag{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border-radius:6px;font-size:0.8rem;}
+.plat-tag a{color:var(--text);text-decoration:none;}
+.plat-tag a:hover{color:var(--accent);}
+
+.empty{color:var(--muted);text-align:center;padding:40px 20px;}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="lbox">
+    <div class="llogo">👤 Portal Streamer</div>
+    <div class="lsub">El Patio RP — Accede con tu ID de Discord</div>
+    <input type="text" id="discordId" placeholder="Tu ID de Discord...">
+    <input type="password" id="accessKey" placeholder="Clave de acceso (opcional)...">
+    <button class="lbtn" onclick="login()">ENTRAR</button>
+    <p style="color:var(--muted);font-size:0.75rem;margin-top:15px;">
+      💡 Tu ID de Discord: Configuración > Avanzado > Modo Desarrollador > Copiar ID
+    </p>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <div>
+      <h1>👋 Hola, <span id="userName">Streamer</span></h1>
+      <div style="color:var(--muted);font-size:0.85rem;">Panel de Streamer • El Patio RP</div>
+    </div>
+    <div class="user-info">
+      <img id="userAvatar" src="" class="avatar" style="display:none;">
+      <button onclick="logout()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:6px;cursor:pointer;">Salir</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Estado -->
+    <div class="card">
+      <h2>🔴 Estado</h2>
+      <div id="liveStatus">
+        <div class="empty">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="card">
+      <h2>📊 Tus Estadísticas</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+        <div>
+          <div class="stat-big" id="statStreams">—</div>
+          <div class="stat-label">Streams totales</div>
+        </div>
+        <div>
+          <div class="stat-big" id="statHours">—</div>
+          <div class="stat-label">Horas totales</div>
+        </div>
+        <div>
+          <div class="stat-big" id="statPeak">—</div>
+          <div class="stat-label">Peak viewers</div>
+        </div>
+        <div>
+          <div class="stat-big" id="statClips">—</div>
+          <div class="stat-label">Clips virales</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coins -->
+    <div class="card" style="background:linear-gradient(135deg,rgba(255,215,0,0.05),transparent);border-color:rgba(255,215,0,0.2);">
+      <h2>🪙 Tus Coins</h2>
+      <div class="stat-big" style="color:#FFD700;" id="statCoins">—</div>
+      <div class="stat-label">Monedas disponibles</div>
+      <div style="margin-top:15px;font-size:0.8rem;color:var(--muted);">
+        Gana coins streameando (10/h) y con logros
+      </div>
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+      <h2>🏆 Tu Posición</h2>
+      <div id="rankingInfo">
+        <div class="empty">Cargando ranking...</div>
+      </div>
+    </div>
+
+    <!-- Clips -->
+    <div class="card" style="grid-column:span 2;">
+      <h2>🎬 Tus Clips Recientes</h2>
+      <div id="clipsList" class="clips-list">
+        <div class="empty">No tienes clips aún</div>
+      </div>
+    </div>
+
+    <!-- Plataformas -->
+    <div class="card" style="grid-column:span 2;">
+      <h2>🔗 Tus Plataformas</h2>
+      <div id="platformsList" class="platforms">
+        <div class="empty">No hay plataformas vinculadas</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let userData = null;
+
+async function login() {
+  const uid = document.getElementById('discordId').value.trim();
+  if (!uid) return alert('Introduce tu ID de Discord');
+  
+  try {
+    // En una versión real, esto verificaría contra el servidor
+    // Por ahora simulamos carga de datos públicos
+    const res = await fetch(`/api/streamer/${uid}`);
+    if (!res.ok) throw new Error('Streamer no encontrado');
+    
+    userData = await res.json();
+    currentUser = uid;
+    
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+    
+    renderData();
+  } catch(e) {
+    alert('No se encontró tu perfil. Asegúrate de estar registrado como streamer.');
+  }
+}
+
+function logout() {
+  currentUser = null;
+  userData = null;
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('discordId').value = '';
+}
+
+function renderData() {
+  if (!userData) return;
+  
+  // Header
+  document.getElementById('userName').textContent = userData.displayName || 'Streamer';
+  
+  // Estado
+  const liveDiv = document.getElementById('liveStatus');
+  if (userData.isLive) {
+    liveDiv.innerHTML = `
+      <div class="live-badge"><span class="live-dot"></span>EN VIVO AHORA</div>
+      <div style="font-size:0.9rem;color:var(--text);">
+        👥 ${userData.liveData?.viewers || 0} viewers • 
+        ${userData.liveData?.platform || ''}
+      </div>
+      <div style="margin-top:10px;font-size:0.8rem;color:var(--muted);">
+        "${userData.liveData?.title || 'Sin título'}"
+      </div>
+    `;
+  } else {
+    liveDiv.innerHTML = `<div class="empty">😴 No estás en vivo ahora</div>`;
+  }
+  
+  // Stats
+  const stats = userData.stats || {};
+  document.getElementById('statStreams').textContent = stats.totalStreams || 0;
+  document.getElementById('statHours').textContent = (stats.totalHours || 0).toFixed(1) + 'h';
+  document.getElementById('statPeak').textContent = (stats.peakViewers || 0).toLocaleString();
+  document.getElementById('statClips').textContent = userData.viralClipsCount || 0;
+  document.getElementById('statCoins').textContent = (userData.coins || 0).toLocaleString();
+  
+  // Ranking
+  const rankDiv = document.getElementById('rankingInfo');
+  if (userData.rankPosition) {
+    const medals = ['🥇','🥈','🥉'];
+    const medal = userData.rankPosition <= 3 ? medals[userData.rankPosition-1] : `#${userData.rankPosition}`;
+    rankDiv.innerHTML = `
+      <div style="text-align:center;padding:20px;">
+        <div style="font-size:3rem;margin-bottom:10px;">${medal}</div>
+        <div style="font-size:1.2rem;font-weight:700;">Top ${userData.rankPosition} de ${userData.rankTotal}</div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:5px;">
+          📊 Score: ${((userData.weeklyStats?.streams||0)*10 + (userData.weeklyStats?.peakViewers||0)).toLocaleString()}
+        </div>
+      </div>
+    `;
+  } else {
+    rankDiv.innerHTML = `<div class="empty">No estás en el ranking esta semana</div>`;
+  }
+  
+  // Clips
+  const clipsDiv = document.getElementById('clipsList');
+  if (userData.clips && userData.clips.length > 0) {
+    clipsDiv.innerHTML = userData.clips.slice(0,5).map(c => `
+      <div class="clip-item">
+        <div class="clip-title">${c.title || 'Sin título'}</div>
+        <div class="clip-meta">
+          Score: ${c.viralScore || 0}/100 
+          ${c.viralScore >= 65 ? '<span class="viral-badge">🔥 VIRAL</span>' : ''}
+          • ${new Date(c.processedAt).toLocaleDateString()}
+        </div>
+      </div>
+    `).join('');
+  } else {
+    clipsDiv.innerHTML = `<div class="empty">No tienes clips registrados aún</div>`;
+  }
+  
+  // Plataformas
+  const platDiv = document.getElementById('platformsList');
+  const plats = userData.platforms || {};
+  const icons = {twitch:'🟣',kick:'🟢',tiktok:'⚫',youtube:'🔴',instagram:'📸'};
+  const urls = {
+    twitch: `https://twitch.tv/${plats.twitch}`,
+    kick: `https://kick.com/${plats.kick}`,
+    tiktok: `https://tiktok.com/@${plats.tiktok}`,
+    youtube: `https://youtube.com/@${plats.youtube}`,
+    instagram: `https://instagram.com/${plats.instagram}`
+  };
+  
+  const platHtml = Object.entries(plats).filter(([k,v])=>v).map(([p,user])=>`
+    <div class="plat-tag">
+      ${icons[p] || '📡'} 
+      <a href="${urls[p]}" target="_blank">${p}: ${user}</a>
+    </div>
+  `).join('');
+  
+  platDiv.innerHTML = platHtml || '<div class="empty">Sin plataformas</div>';
+}
+
+// Auto-login si hay hash en URL
+if (window.location.hash) {
+  const id = window.location.hash.replace('#','');
+  document.getElementById('discordId').value = id;
+}
+</script>
+</body>
+</html>
