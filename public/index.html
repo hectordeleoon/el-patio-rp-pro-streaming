@@ -1,1253 +1,630 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 El Patio Bot Stream — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --bg2: #12121a;
-    --bg3: #1a1a25;
-    --card: #151520;
-    --border: rgba(124, 92, 255, 0.2);
-    --accent: #7c5cff;
-    --accent2: #ff4f9b;
-    --twitch: #9146ff;
-    --kick: #53fc18;
-    --tiktok: #ff0050;
-    --youtube: #ff0000;
-    --text: #e8e8ff;
-    --muted: #6b6b8a;
-    --success: #00e5c8;
-    --danger: #ff4444;
-    --warn: #ffb700;
-  }
-  
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-  
-  /* Login */
-  #login-screen {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(ellipse at 50% 30%, #1a0f3a 0%, var(--bg) 70%);
-    z-index: 100;
-  }
-  
-  .login-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 48px 40px;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 0 80px rgba(124, 92, 255, 0.15);
-  }
-  
-  .login-logo {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .login-sub {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin-bottom: 32px;
-  }
-  
-  .login-box input {
-    width: 100%;
-    padding: 14px 18px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 1rem;
-    margin-bottom: 16px;
-    outline: none;
-    transition: all 0.2s;
-  }
-  
-  .login-box input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.2);
-  }
-  
-  .btn-login {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-login:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(124, 92, 255, 0.3);
-  }
-  
-  .login-error {
-    color: var(--danger);
-    font-size: 0.85rem;
-    margin-top: 12px;
-    display: none;
-  }
-  
-  /* App */
-  #app {
-    display: none;
-    min-height: 100vh;
-  }
-  
-  #app.visible {
-    display: flex;
-  }
-  
-  /* Sidebar */
-  .sidebar {
-    width: 260px;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    height: 100vh;
-  }
-  
-  .sidebar-logo {
-    padding: 24px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .logo-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .logo-sub {
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-top: 4px;
-  }
-  
-  .bot-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--success);
-    animation: pulse 1.5s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  
-  nav {
-    flex: 1;
-    padding: 16px 0;
-    overflow-y: auto;
-  }
-  
-  .nav-section {
-    padding: 8px 20px 4px;
-    font-size: 0.65rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 20px;
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.15s;
-    border-left: 3px solid transparent;
-  }
-  
-  .nav-item:hover {
-    color: var(--text);
-    background: rgba(124, 92, 255, 0.08);
-  }
-  
-  .nav-item.active {
-    color: var(--accent);
-    background: rgba(124, 92, 255, 0.12);
-    border-left-color: var(--accent);
-  }
-  
-  .sidebar-footer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-  
-  /* Main */
-  .main {
-    flex: 1;
-    margin-left: 260px;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  .topbar {
-    height: 64px;
-    padding: 0 28px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  
-  .topbar-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-  }
-  
-  .topbar-actions {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .btn:hover {
-    background: var(--bg3);
-  }
-  
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  
-  .btn-primary:hover {
-    background: #8b6aff;
-  }
-  
-  .btn-danger {
-    background: var(--danger);
-    border-color: var(--danger);
-    color: #fff;
-  }
-  
-  /* Content */
-  .content {
-    flex: 1;
-    padding: 24px 28px;
-  }
-  
-  .panel {
-    display: none;
-  }
-  
-  .panel.active {
-    display: block;
-    animation: fadeIn 0.2s ease;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-  }
-  
-  .stat-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-  }
-  
-  .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-  }
-  
-  .stat-value.live {
-    color: var(--danger);
-    animation: livePulse 1s infinite;
-  }
-  
-  @keyframes livePulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-  
-  /* Cards */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  
-  .card-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  /* Live Streams */
-  .live-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-  }
-  
-  .live-card {
-    background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 68, 68, 0.02));
-    border: 1px solid rgba(255, 68, 68, 0.3);
-    border-radius: 16px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .live-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--danger), var(--accent2));
-  }
-  
-  .live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--danger);
-    color: #fff;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  
-  .live-dot {
-    width: 6px;
-    height: 6px;
-    background: #fff;
-    border-radius: 50%;
-    animation: blink 1s infinite;
-  }
-  
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  
-  .platform-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  
-  .plat-twitch { background: rgba(145, 70, 255, 0.15); color: #b085ff; }
-  .plat-kick { background: rgba(83, 252, 24, 0.1); color: #53fc18; }
-  .plat-tiktok { background: rgba(255, 0, 80, 0.12); color: #ff6090; }
-  .plat-youtube { background: rgba(255, 0, 0, 0.12); color: #ff6060; }
-  
-  .live-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 8px 0;
-  }
-  
-  .live-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
-  
-  /* Streamers Grid */
-  .streamers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-  }
-  
-  .streamer-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    position: relative;
-  }
-  
-  .streamer-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    border-radius: 16px 16px 0 0;
-  }
-  
-  .streamer-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  
-  .streamer-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--bg3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-  }
-  
-  .streamer-info {
-    flex: 1;
-  }
-  
-  .streamer-name {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  
-  .streamer-platforms {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-  }
-  
-  .streamer-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 12px;
-  }
-  
-  .s-stat {
-    background: var(--bg3);
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-  }
-  
-  .s-stat-label {
-    font-size: 0.65rem;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-  
-  .s-stat-value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-top: 2px;
-  }
-  
-  /* Config */
-  .config-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .config-row:last-child {
-    border-bottom: none;
-  }
-  
-  .config-info h4 {
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-  }
-  
-  .config-info p {
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-  
-  /* Toggle */
-  .toggle {
-    position: relative;
-    width: 48px;
-    height: 26px;
-  }
-  
-  .toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .toggle-slider {
-    position: absolute;
-    inset: 0;
-    border-radius: 26px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .toggle-slider::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    left: 2px;
-    top: 2px;
-    background: var(--muted);
-    transition: all 0.2s;
-  }
-  
-  .toggle input:checked + .toggle-slider {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-  
-  .toggle input:checked + .toggle-slider::before {
-    transform: translateX(22px);
-    background: #fff;
-  }
-  
-  /* Logs */
-  .log-list {
-    max-height: 400px;
-    overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-  }
-  
-  .log-item {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 4px;
-    display: flex;
-    gap: 12px;
-  }
-  
-  .log-item.info {
-    background: rgba(0, 229, 200, 0.05);
-  }
-  
-  .log-item.error {
-    background: rgba(255, 68, 68, 0.1);
-    color: #ff8888;
-  }
-  
-  .log-time {
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-  
-  /* Empty State */
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-  }
-  
-  .empty-title {
-    font-size: 1.1rem;
-    color: var(--text);
-    margin-bottom: 8px;
-  }
-  
-  /* Toast */
-  #toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 20px;
-    font-size: 0.9rem;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s;
-    z-index: 1000;
-  }
-  
-  #toast.show {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  
-  #toast.success { border-color: var(--success); color: var(--success); }
-  #toast.error { border-color: var(--danger); color: #ff8888; }
-  
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .sidebar {
-      width: 60px;
-    }
-    .sidebar .logo-sub,
-    .sidebar .nav-item span,
-    .sidebar .nav-section,
-    .sidebar-footer span {
-      display: none;
-    }
-    .main {
-      margin-left: 60px;
-    }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Patio Bot - Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #fff; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: #1a1a1a; padding: 40px; border-radius: 10px; border: 1px solid #333; width: 90%; max-width: 400px; }
+        .login-box h1 { color: #9146FF; margin-bottom: 20px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
+        .login-box button { width: 100%; padding: 12px; background: #9146FF; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .login-box button:hover { background: #7c3aed; }
+        .hidden { display: none !important; }
+        
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: #1a1a1a; border-right: 1px solid #333; padding: 20px 0; }
+        .sidebar h2 { padding: 0 20px 20px; color: #9146FF; font-size: 1.2rem; border-bottom: 1px solid #333; margin-bottom: 20px; }
+        .nav-item { padding: 15px 20px; cursor: pointer; transition: all 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: #252525; border-left-color: #9146FF; }
+        .nav-item.active { background: #252525; border-left-color: #9146FF; color: #9146FF; }
+        .nav-item i { margin-right: 10px; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; max-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+        .header h1 { font-size: 1.8rem; }
+        .status-badge { padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; background: #22c55e; color: #000; font-weight: bold; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; }
+        .card h3 { color: #888; font-size: 0.9rem; margin-bottom: 10px; text-transform: uppercase; }
+        .card .value { font-size: 2rem; font-weight: bold; color: #fff; }
+        .card .value.small { font-size: 1.5rem; }
+        
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
+        th { background: #252525; color: #9146FF; font-weight: 600; }
+        tr:hover { background: #252525; }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; margin-right: 5px; }
+        .btn-primary { background: #9146FF; color: #fff; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-success { background: #22c55e; color: #000; }
+        .btn-warning { background: #f59e0b; color: #000; }
+        .btn:hover { opacity: 0.8; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #888; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        .tab.active { background: #9146FF; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .badge-live { background: #dc2626; color: #fff; }
+        .badge-offline { background: #666; color: #fff; }
+        .badge-pending { background: #f59e0b; color: #000; }
+        
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .error { background: #dc2626; color: #fff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .success { background: #22c55e; color: #000; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; max-width: 400px; padding: 10px; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; border: 1px solid #333; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-btn { font-size: 1.5rem; cursor: pointer; color: #666; }
+        .close-btn:hover { color: #fff; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .stat-item { text-align: center; padding: 15px; background: #0f0f0f; border-radius: 5px; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #9146FF; }
+        .stat-label { font-size: 0.8rem; color: #666; margin-top: 5px; }
+    </style>
 </head>
 <body>
-
-<!-- Login -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">🔥 El Patio Bot Stream</div>
-    <div class="login-sub">Dashboard v7.0 — Notificador de Streams</div>
-    <input type="password" id="login-key" placeholder="Admin Key..." autocomplete="off">
-    <button class="btn-login" onclick="doLogin()">ENTRAR AL PANEL</button>
-    <div class="login-error" id="login-error">❌ Clave incorrecta</div>
-  </div>
-</div>
-
-<!-- App -->
-<div id="app">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-title">🔥 El Patio</div>
-      <div class="logo-sub">BOT STREAM v7.0</div>
-    </div>
-    <div class="bot-status">
-      <div class="status-dot"></div>
-      <span id="bot-tag">Conectando...</span>
-    </div>
-    <nav>
-      <div class="nav-section">Principal</div>
-      <div class="nav-item active" onclick="showPanel('dashboard')">
-        <span>📊</span><span>Dashboard</span>
-      </div>
-      <div class="nav-item" onclick="showPanel('live')">
-        <span>🔴</span><span>En Vivo</span>
-      </div>
-      <div class="nav-item" onclick="showPanel('streamers')">
-        <span>🎮</span><span>Streamers</span>
-      </div>
-      <div class="nav-section">Configuración</div>
-      <div class="nav-item" onclick="showPanel('config')">
-        <span>⚙️</span><span>Config</span>
-      </div>
-      <div class="nav-item" onclick="showPanel('logs')">
-        <span>📋</span><span>Logs</span>
-      </div>
-    </nav>
-    <div class="sidebar-footer">
-      <div>Uptime: <span id="uptime">—</span></div>
-      <div>Ping: <span id="ping">—</span>ms</div>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <div class="main">
-    <div class="topbar">
-      <div class="topbar-title" id="page-title">📊 Dashboard</div>
-      <div class="topbar-actions">
-        <button class="btn" onclick="refreshAll()">🔄 Actualizar</button>
-        <button class="btn btn-primary" onclick="forceCheck()">🔍 Verificar Ahora</button>
-        <button class="btn" onclick="logout()">🚪 Salir</button>
-      </div>
+    <!-- Login -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h1>🔐 El Patio Admin</h1>
+            <input type="password" id="adminKey" placeholder="Introduce la clave de administrador...">
+            <button onclick="login()">Acceder</button>
+            <p style="margin-top: 15px; font-size: 0.8rem; color: #666; text-align: center;">
+                Usa la clave definida en DASHBOARD_ADMIN_KEY o DASHBOARD_STAFF_KEY
+            </p>
+        </div>
     </div>
 
-    <div class="content">
-      <!-- Dashboard -->
-      <div class="panel active" id="panel-dashboard">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">🎮 Streamers</div>
-            <div class="stat-value" id="stat-streamers">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">🔴 En Vivo</div>
-            <div class="stat-value live" id="stat-live">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">⏱️ Horas Totales</div>
-            <div class="stat-value" id="stat-hours">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">📺 Streams</div>
-            <div class="stat-value" id="stat-streams">—</div>
-          </div>
+    <!-- Main App -->
+    <div id="app" class="layout hidden">
+        <div class="sidebar">
+            <h2>🎮 El Patio Bot</h2>
+            <div class="nav-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
+            <div class="nav-item" onclick="showSection('streamers')">👥 Streamers</div>
+            <div class="nav-item" onclick="showSection('solicitudes')">📝 Solicitudes <span id="badge-solicitudes" class="badge badge-pending hidden">0</span></div>
+            <div class="nav-item" onclick="showSection('posts')">📱 Posts Redes</div>
+            <div class="nav-item" onclick="showSection('clips')">🎬 Clips IA</div>
+            <div class="nav-item" onclick="showSection('top3')">🏆 Top 3</div>
+            <div class="nav-item" onclick="showSection('torneos')">⚔️ Torneos</div>
+            <div class="nav-item" onclick="showSection('apuestas')">🎲 Apuestas</div>
+            <div class="nav-item" onclick="showSection('horarios')">📅 Horarios</div>
+            <div class="nav-item" onclick="showSection('config')">⚙️ Config</div>
+            <div class="nav-item" onclick="showSection('logs')">📋 Logs</div>
         </div>
 
-        <div class="card">
-          <div class="card-title">🔴 Streams en Vivo Ahora</div>
-          <div id="dash-live">
-            <div class="empty">
-              <div class="empty-icon">😴</div>
-              <div class="empty-title">Sin streams activos</div>
-              <div>El bot verifica cada minuto automáticamente</div>
+        <div class="main-content">
+            <!-- Dashboard -->
+            <div id="section-dashboard" class="section active">
+                <div class="header">
+                    <h1>Dashboard</h1>
+                    <span class="status-badge">● Online</span>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Streamers Registrados</h3>
+                        <div class="value" id="stat-streamers">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>En Vivo Ahora</h3>
+                        <div class="value" id="stat-live">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Solicitudes Pendientes</h3>
+                        <div class="value" id="stat-pending">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total Coins en Economía</h3>
+                        <div class="value" id="stat-coins">0</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="checkNow()">🔄 Forzar Verificación Ahora</button>
+                <div id="dashboard-msg"></div>
             </div>
-          </div>
-        </div>
 
-        <div class="card">
-          <div class="card-title">⚙️ Estado de Plataformas</div>
-          <div id="platform-status">
-            <div class="config-row">
-              <div class="config-info">
-                <h4>🟣 Twitch</h4>
-                <p>Detección de streams en Twitch</p>
-              </div>
-              <span class="platform-badge plat-twitch" id="status-twitch">ACTIVO</span>
+            <!-- Streamers -->
+            <div id="section-streamers" class="section">
+                <div class="header"><h1>Gestión de Streamers</h1></div>
+                <div class="search-box">
+                    <input type="text" id="search-streamer" placeholder="Buscar streamer..." oninput="filterStreamers()">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Plataformas</th>
+                            <th>Estado</th>
+                            <th>Stats</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-streamers">
+                        <tr><td colspan="5" class="loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>🟢 Kick</h4>
-                <p>Detección de streams en Kick</p>
-              </div>
-              <span class="platform-badge plat-kick" id="status-kick">ACTIVO</span>
-            </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>⚫ TikTok</h4>
-                <p>Detección de streams en TikTok</p>
-              </div>
-              <span class="platform-badge plat-tiktok" id="status-tiktok">ACTIVO</span>
-            </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>🔴 YouTube</h4>
-                <p>Detección de streams en YouTube</p>
-              </div>
-              <span class="platform-badge plat-youtube" id="status-youtube">CONFIGURAR</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Live -->
-      <div class="panel" id="panel-live">
-        <div class="card">
-          <div class="card-title">🔴 Todos los Streams en Vivo</div>
-          <div id="live-list">
-            <div class="empty">
-              <div class="empty-icon">🔴</div>
-              <div class="empty-title">Sin streams activos</div>
-              <div>Los streams aparecerán aquí cuando los streamers inicien transmisión</div>
+            <!-- Solicitudes -->
+            <div id="section-solicitudes" class="section">
+                <div class="header"><h1>Solicitudes Pendientes</h1></div>
+                <div id="lista-solicitudes">
+                    <div class="loading">Cargando solicitudes...</div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Streamers -->
-      <div class="panel" id="panel-streamers">
-        <div class="card">
-          <div class="card-title">🎮 Streamers Registrados</div>
-          <div id="streamers-list">
-            <div class="empty">
-              <div class="empty-icon">🎮</div>
-              <div class="empty-title">Cargando streamers...</div>
+            <!-- Posts -->
+            <div id="section-posts" class="section">
+                <div class="header"><h1>Posts en Redes Sociales</h1></div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3>Crear Nuevo Post</h3>
+                    <div class="form-group">
+                        <label>Plataforma</label>
+                        <select id="post-platform">
+                            <option value="twitter">Twitter/X</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="discord">Discord</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Contenido</label>
+                        <textarea id="post-content" placeholder="Texto del post..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>URL (opcional)</label>
+                        <input type="text" id="post-url" placeholder="https://...">
+                    </div>
+                    <button class="btn btn-primary" onclick="createPost()">Publicar</button>
+                </div>
+                <div id="lista-posts"></div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Config -->
-      <div class="panel" id="panel-config">
-        <div class="card">
-          <div class="card-title">⚙️ Configuración del Bot</div>
-          <div class="config-row">
-            <div class="config-info">
-              <h4>⏱️ Intervalo de Verificación</h4>
-              <p>Tiempo entre cada verificación de streams (actual: <span id="config-interval">60</span>s)</p>
+            <!-- Clips -->
+            <div id="section-clips" class="section">
+                <div class="header"><h1>Clips Generados por IA</h1></div>
+                <div id="lista-clips" class="grid"></div>
             </div>
-            <span style="color: var(--muted);">1 minuto</span>
-          </div>
-          <div class="config-row">
-            <div class="config-info">
-              <h4>🛡️ Cooldown de Notificaciones</h4>
-              <p>Tiempo mínimo entre notificaciones del mismo streamer (actual: <span id="config-cooldown">30</span> min)</p>
-            </div>
-            <span style="color: var(--muted);">30 minutos</span>
-          </div>
-        </div>
 
-        <div class="card">
-          <div class="card-title">📊 Información del Sistema</div>
-          <div id="system-info">
-            <div class="config-row">
-              <div class="config-info">
-                <h4>Versión</h4>
-                <p id="sys-version">—</p>
-              </div>
+            <!-- Top 3 -->
+            <div id="section-top3" class="section">
+                <div class="header">
+                    <h1>🏆 Top 3 Semanal</h1>
+                    <button class="btn btn-warning" onclick="resetTop3()">Reiniciar Semana</button>
+                </div>
+                <div id="top3-content"></div>
             </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>Node.js</h4>
-                <p id="sys-node">—</p>
-              </div>
-            </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>Memoria</h4>
-                <p id="sys-memory">—</p>
-              </div>
-            </div>
-            <div class="config-row">
-              <div class="config-info">
-                <h4>Latencia</h4>
-                <p id="sys-ping">—</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Logs -->
-      <div class="panel" id="panel-logs">
-        <div class="card">
-          <div class="card-title">📋 Logs del Sistema</div>
-          <div class="log-list" id="log-list">
-            <div class="empty">
-              <div class="empty-icon">📋</div>
-              <div class="empty-title">Cargando logs...</div>
+            <!-- Torneos -->
+            <div id="section-torneos" class="section">
+                <div class="header"><h1>Gestión de Torneos</h1></div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3>Crear Torneo</h3>
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="tournament-name" placeholder="Torneo de Verano">
+                    </div>
+                    <div class="form-group">
+                        <label>Métrica</label>
+                        <select id="tournament-metric">
+                            <option value="viewers">Más Viewers</option>
+                            <option value="streams">Más Streams</option>
+                            <option value="clips">Más Clips Virales</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Duración (horas)</label>
+                        <input type="number" id="tournament-duration" value="24">
+                    </div>
+                    <div class="form-group">
+                        <label>Premio (coins)</label>
+                        <input type="number" id="tournament-prize" value="1000">
+                    </div>
+                    <button class="btn btn-primary" onclick="createTournament()">Crear Torneo</button>
+                </div>
+                <div id="lista-torneos"></div>
             </div>
-          </div>
+
+            <!-- Apuestas -->
+            <div id="section-apuestas" class="section">
+                <div class="header"><h1>Sistema de Apuestas</h1></div>
+                <div class="tabs">
+                    <div class="tab active" onclick="showBets('active')">Activas</div>
+                    <div class="tab" onclick="showBets('history')">Historial</div>
+                </div>
+                <div id="lista-apuestas"></div>
+            </div>
+
+            <!-- Horarios -->
+            <div id="section-horarios" class="section">
+                <div class="header"><h1>Horarios de Streams</h1></div>
+                <div id="lista-horarios"></div>
+            </div>
+
+            <!-- Config -->
+            <div id="section-config" class="section">
+                <div class="header"><h1>Configuración del Bot</h1></div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>Cooldown Notificaciones (minutos)</label>
+                        <input type="number" id="config-cooldown" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Intervalo Verificación (ms)</label>
+                        <input type="number" id="config-interval" value="60000">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div id="section-logs" class="section">
+                <div class="header"><h1>Logs del Sistema</h1></div>
+                <div style="background: #0f0f0f; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 0.85rem; max-height: 600px; overflow-y: auto;" id="logs-content">
+                    Cargando logs...
+                </div>
+                <button class="btn btn-primary" onclick="loadLogs()" style="margin-top: 10px;">Actualizar</button>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-</div>
 
-<!-- Toast -->
-<div id="toast"></div>
+    <script>
+        const API_URL = '';
+        let authKey = '';
+        let currentSection = 'dashboard';
+        let streamersData = [];
 
-<script>
-const API = '';
-let adminKey = '';
+        function login() {
+            authKey = document.getElementById('adminKey').value;
+            if (!authKey) return alert('Introduce una clave');
+            
+            // Test auth
+            fetch('/api/stats', { headers: { 'x-admin-key': authKey } })
+                .then(r => {
+                    if (r.ok) {
+                        document.getElementById('loginOverlay').classList.add('hidden');
+                        document.getElementById('app').classList.remove('hidden');
+                        initDashboard();
+                    } else {
+                        alert('Clave incorrecta');
+                    }
+                });
+        }
 
-// Auth
-async function doLogin() {
-  const key = document.getElementById('login-key').value.trim();
-  if (!key) return;
-  
-  try {
-    const r = await fetch(`${API}/admin/logs?key=${key}`);
-    if (r.ok || r.status === 401) {
-      // Verificar con el endpoint de admin
-      const verifyR = await fetch(`${API}/admin/logs`, { headers: { 'X-Admin-Key': key } });
-      if (verifyR.ok || key === 'elpatio-admin-2026') {
-        adminKey = key;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').classList.add('visible');
-        refreshAll();
-        setInterval(refreshAll, 30000);
-        return;
-      }
-    }
-    document.getElementById('login-error').style.display = 'block';
-  } catch (e) {
-    // Permitir login con default key si el servidor no responde
-    if (key === 'elpatio-admin-2026') {
-      adminKey = key;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').classList.add('visible');
-      refreshAll();
-      setInterval(refreshAll, 30000);
-    } else {
-      document.getElementById('login-error').textContent = '❌ Error de conexión';
-      document.getElementById('login-error').style.display = 'block';
-    }
-  }
-}
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('section-' + id).classList.add('active');
+            event.target.classList.add('active');
+            currentSection = id;
+            
+            // Load data
+            if (id === 'streamers') loadStreamers();
+            if (id === 'solicitudes') loadSolicitudes();
+            if (id === 'clips') loadClips();
+            if (id === 'top3') loadTop3();
+            if (id === 'torneos') loadTorneos();
+            if (id === 'apuestas') loadApuestas();
+            if (id === 'horarios') loadHorarios();
+            if (id === 'logs') loadLogs();
+            if (id === 'config') loadConfig();
+            if (id === 'posts') loadPosts();
+        }
 
-document.getElementById('login-key').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+        async function api(endpoint, options = {}) {
+            options.headers = { ...options.headers, 'x-admin-key': authKey, 'Content-Type': 'application/json' };
+            const res = await fetch(endpoint, options);
+            if (!res.ok) throw new Error('Error ' + res.status);
+            return res.json();
+        }
 
-function logout() {
-  adminKey = '';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('login-key').value = '';
-}
+        async function initDashboard() {
+            const stats = await api('/api/stats');
+            document.getElementById('stat-streamers').textContent = stats.streamers;
+            document.getElementById('stat-live').textContent = stats.liveNow;
+            document.getElementById('stat-pending').textContent = stats.pending;
+            document.getElementById('stat-coins').textContent = stats.totalCoins.toLocaleString();
+            
+            if (stats.pending > 0) {
+                const badge = document.getElementById('badge-solicitudes');
+                badge.textContent = stats.pending;
+                badge.classList.remove('hidden');
+            }
+        }
 
-function authHeaders() {
-  return { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey };
-}
+        async function checkNow() {
+            try {
+                await api('/api/check-now', { method: 'POST' });
+                document.getElementById('dashboard-msg').innerHTML = '<div class="success">✅ Verificación completada</div>';
+                setTimeout(() => initDashboard(), 1000);
+            } catch(e) {
+                document.getElementById('dashboard-msg').innerHTML = '<div class="error">❌ Error</div>';
+            }
+        }
 
-// Navigation
-const panelTitles = {
-  dashboard: '📊 Dashboard',
-  live: '🔴 En Vivo',
-  streamers: '🎮 Streamers',
-  config: '⚙️ Configuración',
-  logs: '📋 Logs'
-};
+        async function loadStreamers() {
+            try {
+                streamersData = await api('/api/streamers');
+                renderStreamers();
+            } catch(e) {
+                document.getElementById('table-streamers').innerHTML = '<tr><td colspan="5" class="error">Error cargando</td></tr>';
+            }
+        }
 
-function showPanel(name) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
-  document.getElementById('page-title').textContent = panelTitles[name];
-  
-  if (name === 'streamers') loadStreamers();
-  if (name === 'live') loadLive();
-  if (name === 'logs') loadLogs();
-}
+        function renderStreamers() {
+            const filter = document.getElementById('search-streamer')?.value.toLowerCase() || '';
+            const filtered = streamersData.filter(s => 
+                s.displayName?.toLowerCase().includes(filter) || 
+                s.uid?.includes(filter)
+            );
+            
+            const html = filtered.map(s => `
+                <tr>
+                    <td>
+                        <strong>${s.displayName || 'Unknown'}</strong><br>
+                        <small style="color:#666">${s.uid}</small>
+                    </td>
+                    <td>
+                        ${s.platforms?.twitch ? '🟣 ' : ''}
+                        ${s.platforms?.kick ? '🟢 ' : ''}
+                        ${s.platforms?.tiktok ? '⚫ ' : ''}
+                        ${s.platforms?.youtube ? '🔴 ' : ''}
+                    </td>
+                    <td>${s.isLive ? '<span class="badge badge-live">EN VIVO</span>' : '<span class="badge badge-offline">Offline</span>'}</td>
+                    <td>
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:5px; margin:0">
+                            <div class="stat-item" style="padding:5px"><div class="stat-value" style="font-size:1rem">${s.stats?.totalStreams || 0}</div><div class="stat-label">Streams</div></div>
+                            <div class="stat-item" style="padding:5px"><div class="stat-value" style="font-size:1rem">${s.coins || 0}</div><div class="stat-label">Coins</div></div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteStreamer('${s.uid}')">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('table-streamers').innerHTML = html || '<tr><td colspan="5">No hay streamers</td></tr>';
+        }
 
-// Refresh
-async function refreshAll() {
-  try {
-    const [statusR, liveR] = await Promise.all([
-      fetch(`${API}/`),
-      fetch(`${API}/live`)
-    ]);
-    
-    const status = await statusR.json();
-    const live = await liveR.json();
-    
-    // Update status bar
-    document.getElementById('bot-tag').textContent = status.bot || 'Online';
-    document.getElementById('uptime').textContent = fmtUptime(status.uptime);
-    document.getElementById('ping').textContent = status.ping || '—';
-    
-    // Update stats
-    document.getElementById('stat-streamers').textContent = status.stats.streamers;
-    document.getElementById('stat-live').textContent = live.length;
-    document.getElementById('stat-hours').textContent = parseFloat(status.stats.totalHours).toFixed(1) + 'h';
-    document.getElementById('stat-streams').textContent = status.stats.totalStreams;
-    
-    // Update system info
-    document.getElementById('sys-version').textContent = status.version;
-    document.getElementById('sys-node').textContent = status.node || '—';
-    document.getElementById('sys-memory').textContent = status.memory;
-    document.getElementById('sys-ping').textContent = status.ping + 'ms';
-    document.getElementById('config-interval').textContent = status.config?.checkInterval / 1000 || 60;
-    document.getElementById('config-cooldown').textContent = status.config?.cooldownMinutes || 30;
-    
-    // Update platform status
-    if (status.config) {
-      document.getElementById('status-twitch').textContent = status.config.enableTwitch ? 'ACTIVO' : 'DESACTIVADO';
-      document.getElementById('status-kick').textContent = status.config.enableKick ? 'ACTIVO' : 'DESACTIVADO';
-      document.getElementById('status-tiktok').textContent = status.config.enableTikTok ? 'ACTIVO' : 'DESACTIVADO';
-      document.getElementById('status-youtube').textContent = status.config.enableYouTube ? 'ACTIVO' : 'CONFIGURAR';
-    }
-    
-    // Update live cards
-    updateLiveCards(live);
-    
-  } catch (e) {
-    console.error('Error refreshing:', e);
-  }
-}
+        function filterStreamers() { renderStreamers(); }
 
-function updateLiveCards(live) {
-  const dashLive = document.getElementById('dash-live');
-  const liveList = document.getElementById('live-list');
-  
-  if (live.length === 0) {
-    const emptyHtml = `
-      <div class="empty">
-        <div class="empty-icon">😴</div>
-        <div class="empty-title">Sin streams activos</div>
-        <div>El bot verifica cada minuto automáticamente</div>
-      </div>
-    `;
-    dashLive.innerHTML = emptyHtml;
-    liveList.innerHTML = emptyHtml;
-    return;
-  }
-  
-  const platformColors = {
-    twitch: '#9146FF',
-    kick: '#53FC18',
-    tiktok: '#FF0050',
-    youtube: '#FF0000'
-  };
-  
-  const platformEmojis = {
-    twitch: '🟣',
-    kick: '🟢',
-    tiktok: '⚫',
-    youtube: '🔴'
-  };
-  
-  const cardsHtml = live.map(s => `
-    <div class="live-card">
-      <div class="live-badge"><span class="live-dot"></span>EN VIVO</div>
-      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <span class="platform-badge plat-${s.platform}">${platformEmojis[s.platform]} ${s.platform.toUpperCase()}</span>
-      </div>
-      <div class="live-name">${s.userId}</div>
-      <div class="live-meta">
-        <span>👥 ${fmtNum(s.currentViewers || 0)} viewers</span>
-        <span>🔥 Peak: ${fmtNum(s.peakViewers || 0)}</span>
-        <span>⏰ ${new Date(s.startedAt).toLocaleTimeString('es')}</span>
-      </div>
-    </div>
-  `).join('');
-  
-  dashLive.innerHTML = `<div class="live-grid">${cardsHtml}</div>`;
-  liveList.innerHTML = `<div class="live-grid">${cardsHtml}</div>`;
-}
+        async function deleteStreamer(uid) {
+            if (!confirm('¿Eliminar este streamer?')) return;
+            await api('/api/streamer/' + uid, { method: 'DELETE' });
+            loadStreamers();
+        }
 
-async function loadStreamers() {
-  try {
-    const r = await fetch(`${API}/streamers`);
-    const streamers = await r.json();
-    const entries = Object.entries(streamers);
-    
-    const list = document.getElementById('streamers-list');
-    
-    if (entries.length === 0) {
-      list.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🎮</div>
-          <div class="empty-title">Sin streamers registrados</div>
-          <div>Los streamers pueden registrarse con /registrar-streamer en Discord</div>
-        </div>
-      `;
-      return;
-    }
-    
-    const platformEmojis = {
-      twitch: '🟣',
-      kick: '🟢',
-      tiktok: '⚫',
-      youtube: '🔴'
-    };
-    
-    list.innerHTML = `<div class="streamers-grid">${entries.map(([uid, d]) => {
-      const stats = d.stats || {};
-      const plats = Object.entries(d.platforms || {}).filter(([, v]) => v);
-      return `
-        <div class="streamer-card" style="--accent-color: ${d.color || '#9146FF'}">
-          <div class="streamer-header">
-            <div class="streamer-avatar">👤</div>
-            <div class="streamer-info">
-              <div class="streamer-name">${uid.slice(0, 20)}...</div>
-              <div class="streamer-platforms">
-                ${plats.map(([p]) => `<span class="platform-badge plat-${p}">${platformEmojis[p]}</span>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="streamer-stats">
-            <div class="s-stat">
-              <div class="s-stat-label">Streams</div>
-              <div class="s-stat-value">${stats.totalStreams || 0}</div>
-            </div>
-            <div class="s-stat">
-              <div class="s-stat-label">Horas</div>
-              <div class="s-stat-value">${(stats.totalHours || 0).toFixed(1)}h</div>
-            </div>
-            <div class="s-stat">
-              <div class="s-stat-label">Peak</div>
-              <div class="s-stat-value">${fmtNum(stats.peakViewers || 0)}</div>
-            </div>
-            <div class="s-stat">
-              <div class="s-stat-label">Coins</div>
-              <div class="s-stat-value">${stats.coins || 0}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('')}</div>`;
-    
-  } catch (e) {
-    console.error('Error loading streamers:', e);
-  }
-}
+        async function loadSolicitudes() {
+            try {
+                const data = await api('/api/pending-registrations');
+                const container = document.getElementById('lista-solicitudes');
+                
+                if (!data.length) {
+                    container.innerHTML = '<div class="card">No hay solicitudes pendientes</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(s => `
+                    <div class="card" style="margin-bottom: 15px;">
+                        <h3>${s.displayName || s.uid}</h3>
+                        <p>Plataformas: ${Object.keys(s.platforms || {}).join(', ')}</p>
+                        <p style="color:#888">${s.bio || 'Sin biografía'}</p>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-success" onclick="approve('${s.uid}')">✅ Aprobar</button>
+                            <button class="btn btn-danger" onclick="reject('${s.uid}')">❌ Rechazar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                document.getElementById('lista-solicitudes').innerHTML = '<div class="error">Error cargando</div>';
+            }
+        }
 
-async function loadLive() {
-  // Ya se carga en refreshAll
-}
+        async function approve(uid) {
+            await api('/api/approve-registration/' + uid, { method: 'POST' });
+            loadSolicitudes();
+            initDashboard();
+        }
 
-async function loadLogs() {
-  try {
-    const r = await fetch(`${API}/admin/logs`, { headers: authHeaders() });
-    const data = await r.json();
-    const logs = (data.logs || []).reverse();
-    
-    const list = document.getElementById('log-list');
-    
-    if (logs.length === 0) {
-      list.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">📋</div>
-          <div class="empty-title">Sin logs disponibles</div>
-        </div>
-      `;
-      return;
-    }
-    
-    list.innerHTML = logs.map(l => `
-      <div class="log-item ${l.type}">
-        <span class="log-time">${new Date(l.time).toLocaleTimeString('es')}</span>
-        <span>${l.msg}</span>
-      </div>
-    `).join('');
-    
-  } catch (e) {
-    document.getElementById('log-list').innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">⚠️</div>
-        <div class="empty-title">Error cargando logs</div>
-      </div>
-    `;
-  }
-}
+        async function reject(uid) {
+            await api('/api/reject-registration/' + uid, { method: 'POST' });
+            loadSolicitudes();
+            initDashboard();
+        }
 
-async function forceCheck() {
-  toast('🔍 Verificando streams...');
-  try {
-    const r = await fetch(`${API}/admin/check-streams`, { 
-      method: 'POST', 
-      headers: authHeaders() 
-    });
-    const data = await r.json();
-    toast(`✅ Verificación completada. ${data.liveCount || 0} streams activos`, 'success');
-    refreshAll();
-  } catch (e) {
-    toast('❌ Error al verificar', 'error');
-  }
-}
+        async function loadClips() {
+            try {
+                const clips = await api('/api/clips');
+                const container = document.getElementById('lista-clips');
+                if (!clips.length) {
+                    container.innerHTML = '<div class="card">No hay clips generados</div>';
+                    return;
+                }
+                container.innerHTML = clips.map(c => `
+                    <div class="card">
+                        <h3>${c.title || 'Clip sin título'}</h3>
+                        <p>Streamer: ${c.streamerId}</p>
+                        <p>Viral Score: ${c.viralScore || 'N/A'}/100</p>
+                        <p>Categoría: ${c.category || 'N/A'}</p>
+                    </div>
+                `).join('');
+            } catch(e) {
+                document.getElementById('lista-clips').innerHTML = '<div class="error">Error</div>';
+            }
+        }
 
-// Toast
-let toastTimer;
-function toast(msg, type = 'info') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.className = '', 3500);
-}
+        async function loadTop3() {
+            try {
+                const data = await api('/api/top3');
+                const container = document.getElementById('top3-content');
+                if (!data.length) {
+                    container.innerHTML = '<div class="card">No hay datos aún</div>';
+                    return;
+                }
+                container.innerHTML = data.map((s, i) => `
+                    <div class="card" style="border-left: 5px solid ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32'}">
+                        <h3>#${i + 1} ${s.displayName}</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item"><div class="stat-value">${s.peakViewers || 0}</div><div class="stat-label">Peak Viewers</div></div>
+                            <div class="stat-item"><div class="stat-value">${s.streams || 0}</div><div class="stat-label">Streams</div></div>
+                            <div class="stat-item"><div class="stat-value">${s.score || 0}</div><div class="stat-label">Score Total</div></div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                document.getElementById('top3-content').innerHTML = '<div class="error">Error</div>';
+            }
+        }
 
-// Utils
-function fmtNum(n) {
-  if (!n) return '0';
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-  return n.toString();
-}
+        async function resetTop3() {
+            if (!confirm('¿Reiniciar el Top 3 semanal?')) return;
+            await api('/api/top3/reset', { method: 'POST' });
+            loadTop3();
+        }
 
-function fmtUptime(s) {
-  if (!s) return '—';
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-</script>
+        async function loadTorneos() {
+            try {
+                const data = await api('/api/tournaments');
+                document.getElementById('lista-torneos').innerHTML = data.map(t => `
+                    <div class="card">
+                        <h3>${t.name}</h3>
+                        <p>Métrica: ${t.metric} | Premio: ${t.prize} coins</p>
+                        <p>Estado: ${t.status}</p>
+                    </div>
+                `).join('') || '<div class="card">No hay torneos activos</div>';
+            } catch(e) {
+                document.getElementById('lista-torneos').innerHTML = '<div class="error">Error</div>';
+            }
+        }
 
+        async function createTournament() {
+            const body = {
+                name: document.getElementById('tournament-name').value,
+                metric: document.getElementById('tournament-metric').value,
+                duration: parseInt(document.getElementById('tournament-duration').value),
+                prize: parseInt(document.getElementById('tournament-prize').value)
+            };
+            await api('/api/tournament', { method: 'POST', body: JSON.stringify(body) });
+            loadTorneos();
+        }
+
+        async function loadApuestas(type = 'active') {
+            try {
+                const endpoint = type === 'active' ? '/api/bets' : '/api/bets/history';
+                const data = await api(endpoint);
+                document.getElementById('lista-apuestas').innerHTML = data.map(b => `
+                    <div class="card">
+                        <p>Apuesta: ${b.amount} coins</p>
+                        <p>Streamer: ${b.streamerId}</p>
+                        <p>Estado: ${b.status}</p>
+                    </div>
+                `).join('') || '<div class="card">No hay apuestas</div>';
+            } catch(e) {
+                document.getElementById('lista-apuestas').innerHTML = '<div class="error">Error</div>';
+            }
+        }
+
+        function showBets(type) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadApuestas(type);
+        }
+
+        async function loadHorarios() {
+            try {
+                const data = await api('/api/schedules');
+                document.getElementById('lista-horarios').innerHTML = data.map(h => `
+                    <div class="card">
+                        <h3>${h.displayName}</h3>
+                        <p>${h.day} a las ${h.time}</p>
+                        <p>Juego: ${h.game || 'No especificado'}</p>
+                    </div>
+                `).join('') || '<div class="card">No hay horarios configurados</div>';
+            } catch(e) {
+                document.getElementById('lista-horarios').innerHTML = '<div class="error">Error</div>';
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const data = await api('/api/config');
+                document.getElementById('config-cooldown').value = data.notifications.cooldownMinutes;
+                document.getElementById('config-interval').value = data.notifications.checkInterval;
+            } catch(e) {}
+        }
+
+        async function saveConfig() {
+            const body = {
+                cooldownMinutes: parseInt(document.getElementById('config-cooldown').value),
+                checkInterval: parseInt(document.getElementById('config-interval').value)
+            };
+            await api('/api/config', { method: 'POST', body: JSON.stringify(body) });
+            alert('Configuración guardada');
+        }
+
+        async function loadLogs() {
+            try {
+                const logs = await api('/api/logs');
+                const html = logs.map(l => `
+                    <div style="margin-bottom: 5px; ${l.type === 'error' ? 'color: #ff4444' : 'color: #aaa'}">
+                        [${new Date(l.time).toLocaleTimeString()}] ${l.msg}
+                    </div>
+                `).join('');
+                document.getElementById('logs-content').innerHTML = html || 'No hay logs';
+            } catch(e) {
+                document.getElementById('logs-content').innerHTML = '<div class="error">Error cargando logs</div>';
+            }
+        }
+
+        async function loadPosts() {
+            try {
+                const posts = await api('/api/posts');
+                document.getElementById('lista-posts').innerHTML = posts.map(p => `
+                    <div class="card" style="margin-bottom: 10px;">
+                        <strong>${p.platform}</strong>
+                        <p>${p.content}</p>
+                        <small style="color:#666">${new Date(p.createdAt).toLocaleString()}</small>
+                    </div>
+                `).join('') || '<div class="card">No hay posts</div>';
+            } catch(e) {
+                document.getElementById('lista-posts').innerHTML = '<div class="error">Error</div>';
+            }
+        }
+
+        async function createPost() {
+            const body = {
+                platform: document.getElementById('post-platform').value,
+                content: document.getElementById('post-content').value,
+                url: document.getElementById('post-url').value
+            };
+            await api('/api/posts', { method: 'POST', body: JSON.stringify(body) });
+            document.getElementById('post-content').value = '';
+            document.getElementById('post-url').value = '';
+            loadPosts();
+        }
+
+        // Auto refresh cada 30 segundos si está en dashboard
+        setInterval(() => {
+            if (currentSection === 'dashboard') initDashboard();
+        }, 30000);
+    </script>
 </body>
 </html>
