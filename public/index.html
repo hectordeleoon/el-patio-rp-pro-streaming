@@ -292,22 +292,23 @@
         let currentSection = 'dashboard';
         let streamersData = [];
 
-        function login() {
-            authKey = document.getElementById('adminKey').value;
-            if (!authKey) return alert('Introduce una clave');
-            
-            // Test auth
-            fetch('/api/stats', { headers: { 'x-admin-key': authKey } })
-                .then(r => {
-                    if (r.ok) {
-                        document.getElementById('loginOverlay').classList.add('hidden');
-                        document.getElementById('app').classList.remove('hidden');
-                        initDashboard();
-                    } else {
-                        alert('Clave incorrecta');
-                    }
-                });
-        }
+      function login() {
+    authKey = document.getElementById('adminKey').value.trim(); // Agregamos .trim()
+    if (!authKey) return alert('Introduce una clave');
+    
+    console.log('Enviando clave:', authKey); // Debug
+    
+    fetch('/api/stats', { headers: { 'x-admin-key': authKey } })
+        .then(r => {
+            if (r.ok) {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                initDashboard();
+            } else {
+                alert('Clave incorrecta. Intenta de nuevo.');
+            }
+        });
+}
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
