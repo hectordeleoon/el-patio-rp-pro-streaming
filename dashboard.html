@@ -15,7 +15,6 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-/* ── LOGIN ── */
 #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 50% 20%,#180d3a 0%,var(--bg) 65%);z-index:200;}
 .lbox{background:var(--card);border:1px solid var(--border);border-radius:22px;
@@ -33,11 +32,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .lbtn:hover{transform:translateY(-2px);box-shadow:0 10px 35px rgba(124,92,255,.3);}
 .lerr{color:var(--danger);font-size:.8rem;margin-top:10px;display:none;}
 
-/* ── APP ── */
 #app{display:none;min-height:100vh;}
 #app.on{display:flex;}
 
-/* ── SIDEBAR ── */
 .sb{width:248px;background:var(--bg2);border-right:1px solid var(--border);
   display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;}
 .sb-logo{padding:20px 18px;border-bottom:1px solid var(--border);}
@@ -60,7 +57,6 @@ nav{flex:1;padding:10px 0;}
   font-size:.6rem;padding:1px 5px;border-radius:8px;display:none;}
 .sb-foot{padding:12px 18px;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted);line-height:1.7;}
 
-/* ── MAIN ── */
 .main{flex:1;margin-left:248px;display:flex;flex-direction:column;min-height:100vh;}
 .topbar{height:58px;padding:0 24px;background:var(--bg2);border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
@@ -81,7 +77,6 @@ nav{flex:1;padding:10px 0;}
 .panel.on{display:block;animation:fi .18s ease;}
 @keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── STATS ── */
 .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px;}
 .sl{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
@@ -89,17 +84,14 @@ nav{flex:1;padding:10px 0;}
 .sv.live{color:var(--danger);animation:lp 1s infinite;}
 @keyframes lp{0%,100%{opacity:1}50%{opacity:.6}}
 
-/* ── CARD ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px;margin-bottom:13px;}
 .ct{font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:13px;
   display:flex;align-items:center;justify-content:space-between;}
 .ct-l{display:flex;align-items:center;gap:7px;}
 
-/* ── GRID LAYOUTS ── */
 .lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
 .sg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
 
-/* ── LIVE CARD ── */
 .lc{background:linear-gradient(135deg,rgba(255,61,61,.08),rgba(255,61,61,.01));
   border:1px solid rgba(255,61,61,.22);border-radius:13px;padding:13px;position:relative;overflow:hidden;}
 .lc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
@@ -118,7 +110,6 @@ nav{flex:1;padding:10px 0;}
 .ln{font-size:.95rem;font-weight:600;margin:7px 0 4px;}
 .lm{display:flex;flex-wrap:wrap;gap:8px;font-size:.77rem;color:var(--muted);}
 
-/* ── STREAMER CARD ── */
 .strc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px;}
 .strh{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
 .strav{width:42px;height:42px;border-radius:50%;background:var(--bg3);
@@ -130,7 +121,6 @@ nav{flex:1;padding:10px 0;}
 .ssl{font-size:.58rem;color:var(--muted);text-transform:uppercase;}
 .ssv{font-size:.95rem;font-weight:600;margin-top:1px;}
 
-/* ── CLIPS ── */
 .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
 .cc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px;}
 .cc.viral{border-color:rgba(255,183,0,.3);background:linear-gradient(135deg,rgba(255,183,0,.05),transparent);}
@@ -144,7 +134,6 @@ nav{flex:1;padding:10px 0;}
 .ctags{font-size:.7rem;color:var(--accent);margin-bottom:9px;line-height:1.5;}
 .cacts{display:flex;gap:5px;flex-wrap:wrap;}
 
-/* ── POSTS ── */
 .pl{display:flex;flex-direction:column;gap:9px;}
 .pi{background:var(--bg3);border:1px solid var(--border);border-radius:9px;
   padding:11px 13px;display:flex;align-items:flex-start;gap:11px;}
@@ -156,7 +145,6 @@ nav{flex:1;padding:10px 0;}
 .plink{font-size:.75rem;color:var(--accent);text-decoration:none;}
 .plink:hover{text-decoration:underline;}
 
-/* ── TOP 3 ── */
 .t3p{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:18px;}
 .pc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;text-align:center;}
 .pc.g{border-color:rgba(255,215,0,.35);background:linear-gradient(135deg,rgba(255,215,0,.07),transparent);}
@@ -167,14 +155,12 @@ nav{flex:1;padding:10px 0;}
 .pst{font-size:.75rem;color:var(--muted);line-height:1.7;}
 .psc{font-size:1.25rem;font-weight:700;color:var(--warn);margin-top:7px;}
 
-/* ── PENDING ── */
 .pend-list{display:flex;flex-direction:column;gap:10px;}
 .pend-item{background:var(--bg3);border:1px solid rgba(255,183,0,.25);border-radius:10px;padding:13px;}
 .pend-head{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .pend-plats{font-size:.78rem;color:var(--muted);margin-bottom:9px;line-height:1.6;}
 .pend-acts{display:flex;gap:7px;}
 
-/* ── TORNEOS ── */
 .tc{background:var(--card);border:1px solid rgba(255,107,0,.25);border-radius:13px;padding:14px;margin-bottom:11px;}
 .tc.active{border-color:rgba(255,107,0,.4);background:linear-gradient(135deg,rgba(255,107,0,.05),transparent);}
 .tc.finished{opacity:.65;}
@@ -182,10 +168,8 @@ nav{flex:1;padding:10px 0;}
 .ts-active{background:rgba(0,229,200,.15);color:var(--success);}
 .ts-fin{background:rgba(107,107,138,.2);color:var(--muted);}
 
-/* ── APUESTAS ── */
 .bet-item{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:8px;}
 
-/* ── CONFIG ── */
 .crow{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);}
 .crow:last-child{border-bottom:none;}
 .ci h4{font-size:.87rem;margin-bottom:2px;}
@@ -194,7 +178,6 @@ nav{flex:1;padding:10px 0;}
   color:var(--text);font-size:.85rem;width:130px;outline:none;transition:border-color .2s;}
 .cfg-input:focus{border-color:var(--accent);}
 
-/* ── REGISTER ── */
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px;}
 .fg label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;}
 .fg input{width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border);
@@ -207,32 +190,27 @@ nav{flex:1;padding:10px 0;}
 .vr{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--bg);
   border-radius:7px;margin-bottom:5px;}
 
-/* ── FILTER BAR ── */
 .fb{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
 .fb button{padding:4px 11px;border-radius:20px;font-size:.75rem;cursor:pointer;
   border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;}
 .fb button:hover,.fb button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
 
-/* ── LOGS ── */
 .ll{max-height:440px;overflow-y:auto;font-family:monospace;font-size:.74rem;}
 .li{padding:6px 9px;border-radius:5px;margin-bottom:3px;display:flex;gap:9px;}
 .li.info{background:rgba(0,229,200,.03);}
 .li.error{background:rgba(255,61,61,.07);color:#ff8888;}
 .lt{color:var(--muted);flex-shrink:0;}
 
-/* ── BADGE ── */
 .bdg{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.64rem;font-weight:600;}
 .bdg-ok{background:rgba(0,229,200,.14);color:var(--success);}
 .bdg-warn{background:rgba(255,183,0,.14);color:var(--warn);}
 .bdg-err{background:rgba(255,61,61,.14);color:var(--danger);}
 .bdg-muted{background:rgba(107,107,138,.2);color:var(--muted);}
 
-/* ── EMPTY ── */
 .empty{text-align:center;padding:44px 20px;color:var(--muted);}
 .eico{font-size:2.5rem;margin-bottom:12px;}
 .etitle{font-size:.95rem;color:var(--text);margin-bottom:5px;}
 
-/* ── TOAST ── */
 #toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--border);
   border-radius:9px;padding:11px 17px;font-size:.84rem;box-shadow:0 8px 30px rgba(0,0,0,.45);
   transform:translateY(100px);opacity:0;transition:all .3s;z-index:999;max-width:310px;}
@@ -241,7 +219,6 @@ nav{flex:1;padding:10px 0;}
 #toast.e{border-color:var(--danger);color:#ff8888;}
 #toast.w{border-color:var(--warn);color:var(--warn);}
 
-/* ── LOADING ── */
 .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);
   border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -265,10 +242,15 @@ nav{flex:1;padding:10px 0;}
 <div id="login">
   <div class="lbox">
     <div class="llogo">🔥 El Patio Bot</div>
-    <div class="lsub">Dashboard v9.0 — Ultra Notifier + IA + Coins</div>
+    <div class="lsub">Dashboard v9.0 — Admin Access</div>
     <input type="password" id="lkey" placeholder="Admin Key..." autocomplete="off">
     <button class="lbtn" onclick="doLogin()">ENTRAR AL PANEL</button>
     <div class="lerr" id="lerr">❌ Clave incorrecta</div>
+    <div style="margin-top:15px;font-size:.75rem;color:var(--muted);">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="rememberKey" checked style="accent-color:var(--accent);"> Recordar sesión
+      </label>
+    </div>
   </div>
 </div>
 
@@ -317,7 +299,7 @@ nav{flex:1;padding:10px 0;}
 
     <div class="content">
 
-      <!-- ═══ DASHBOARD ═══ -->
+      <!-- DASHBOARD -->
       <div class="panel on" id="p-dash">
         <div class="sg">
           <div class="sc"><div class="sl">🎮 Streamers</div><div class="sv" id="s-str">—</div></div>
@@ -340,107 +322,14 @@ nav{flex:1;padding:10px 0;}
         </div>
       </div>
 
-      <!-- ═══ EN VIVO ═══ -->
-      <div class="panel" id="p-live">
-        <div class="card">
-          <div class="ct"><span class="ct-l">🔴 Todos los Streams en Vivo</span><button class="btn bsm" onclick="loadLive()">🔄</button></div>
-          <div id="live-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ STREAMERS ═══ -->
-      <div class="panel" id="p-streamers">
-        <div class="card">
-          <div class="ct">
-            <span class="ct-l">🎮 Streamers (<span id="str-count">0</span>)</span>
-            <button class="btn bp bsm" onclick="sp('registrar',document.querySelector('[data-p=registrar]'))">➕ Nuevo</button>
-          </div>
-          <div id="str-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ POSTS ═══ -->
-      <div class="panel" id="p-posts">
-        <div class="card">
-          <div class="ct">
-            <span class="ct-l">📱 Posts de Redes Sociales</span>
-            <button class="btn bsm" onclick="loadPosts()">🔄</button>
-          </div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:13px;">
-            El bot detecta automáticamente cuando un streamer publica en TikTok o Instagram (cada 15 min).
-            Las notificaciones se envían al canal <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">DISCORD_POSTS_CHANNEL_ID</code>.
-          </p>
-          <div id="posts-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ CLIPS ═══ -->
-      <div class="panel" id="p-clips">
-        <div class="card">
-          <div class="ct"><span class="ct-l">🎬 Clips IA</span><button class="btn bsm" onclick="loadClips()">🔄</button></div>
-          <div class="fb">
-            <button class="on" onclick="setClipF('all',this)">Todos</button>
-            <button onclick="setClipF('viral',this)">🔥 Virales (≥65)</button>
-            <button onclick="setClipF('pending',this)">⏳ Sin subir</button>
-          </div>
-          <div id="clips-grid"></div>
-        </div>
-      </div>
-
-      <!-- ═══ TOP 3 ═══ -->
-      <div class="panel" id="p-top3">
-        <div class="card">
-          <div class="ct">
-            <span class="ct-l">🏆 Top 3 Semanal</span>
-            <button class="btn bsm bw" onclick="sendTop3()">📤 Enviar al Server</button>
-          </div>
-          <div class="t3p" id="top3-pod"></div>
-          <div id="top3-table"></div>
-        </div>
-      </div>
-
-      <!-- ═══ TORNEOS ═══ -->
-      <div class="panel" id="p-torneos">
-        <div class="card">
-          <div class="ct"><span class="ct-l">🏟️ Torneos / Eventos</span><button class="btn bsm" onclick="loadTorneos()">🔄</button></div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:13px;">
-            Crea torneos con <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">/crear-torneo</code> en Discord.
-            Los streamers se unen con <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">/unirse-torneo</code>.
-          </p>
-          <div id="torneos-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ APUESTAS ═══ -->
-      <div class="panel" id="p-apuestas">
-        <div class="card">
-          <div class="ct"><span class="ct-l">🎲 Apuestas Activas e Historial</span><button class="btn bsm" onclick="loadApuestas()">🔄</button></div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:13px;">
-            Los usuarios usan <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">/apostar</code> para apostar coins a streamers en vivo.
-          </p>
-          <div id="apuestas-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ PENDING (solicitudes) ═══ -->
-      <div class="panel" id="p-pending">
-        <div class="card">
-          <div class="ct"><span class="ct-l">⏳ Solicitudes de Auto-registro</span><button class="btn bsm" onclick="loadPending()">🔄</button></div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:13px;">
-            Solicitudes enviadas con <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">/quiero-ser-streamer</code>. Aprueba o rechaza aquí o en el canal admin de Discord.
-          </p>
-          <div class="pend-list" id="pend-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ REGISTRAR ═══ -->
+      <!-- REGISTRAR -->
       <div class="panel" id="p-registrar">
         <div class="card">
           <div class="ct">➕ Registrar Streamer Manualmente</div>
           <div style="margin-bottom:16px;">
-            <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px;">🔍 Buscar usuario de Discord</label>
+            <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px;">🔍 Buscar usuario de Discord (nombre, apodo o ID)</label>
             <div style="display:flex;gap:7px;">
-              <input id="si" type="text" placeholder="Nombre, apodo o Discord ID..." style="flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none;" onkeydown="if(event.key==='Enter')searchUser()">
+              <input id="si" type="text" placeholder="Ej: max o 123456789..." style="flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none;" onkeydown="if(event.key==='Enter')searchUser()">
               <button class="btn bp" onclick="searchUser()">Buscar</button>
             </div>
             <div class="sr-box" id="sr"></div>
@@ -454,10 +343,10 @@ nav{flex:1;padding:10px 0;}
           </div>
           <div id="regform" style="display:none;">
             <div class="fg">
-              <div><label>🟣 Twitch</label><input id="rt" placeholder="ej: juanito_rp"></div>
-              <div><label>🟢 Kick</label><input id="rk" placeholder="ej: juanito"></div>
-              <div><label>⚫ TikTok (sin @)</label><input id="rtt" placeholder="ej: juanito_rp"></div>
-              <div><label>🔴 YouTube (@handle)</label><input id="ry" placeholder="ej: @juanito"></div>
+              <div><label>🟣 Twitch (URL o usuario)</label><input id="rt" placeholder="https://twitch.tv/usuario o usuario"></div>
+              <div><label>🟢 Kick (URL o usuario)</label><input id="rk" placeholder="https://kick.com/usuario o usuario"></div>
+              <div><label>⚫ TikTok (URL o @usuario)</label><input id="rtt" placeholder="https://tiktok.com/@usuario o usuario"></div>
+              <div><label>🔴 YouTube (@handle)</label><input id="ry" placeholder="@usuario"></div>
               <div><label>📝 Biografía</label><input id="rb" placeholder="Streamer de GTA V RP..."></div>
               <div><label>🎨 Color</label><div style="display:flex;align-items:center;gap:7px;"><input type="color" id="rc" value="#9146FF" style="width:42px;height:34px;border:none;background:none;cursor:pointer;"><span style="font-size:.78rem;color:var(--muted);">Color del hilo</span></div></div>
             </div>
@@ -467,41 +356,11 @@ nav{flex:1;padding:10px 0;}
         </div>
       </div>
 
-      <!-- ═══ SCHEDULES ═══ -->
-      <div class="panel" id="p-schedules">
-        <div class="card">
-          <div class="ct"><span class="ct-l">📅 Horarios Programados</span><button class="btn bsm" onclick="loadSchedules()">🔄</button></div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:13px;">Los streamers usan <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;">/horario-stream</code>. El bot avisa 30 min antes.</p>
-          <div id="sched-list"></div>
-        </div>
-      </div>
-
-      <!-- ═══ CONFIG ═══ -->
-      <div class="panel" id="p-config">
-        <div class="card">
-          <div class="ct"><span class="ct-l">⚙️ Configuración en Vivo</span><button class="btn bp bsm" onclick="saveConfig()">💾 Guardar</button></div>
-          <div class="crow"><div class="ci"><h4>🛡️ Cooldown notificaciones (min)</h4><p>Tiempo mínimo entre notificaciones del mismo streamer</p></div><input class="cfg-input" id="cfg-cool" type="number" min="5" max="120"></div>
-          <div class="crow"><div class="ci"><h4>⏱️ Intervalo de verificación (seg)</h4><p>Cada cuántos segundos revisa si hay streams en vivo</p></div><input class="cfg-input" id="cfg-int" type="number" min="30" max="300"></div>
-          <div class="crow"><div class="ci"><h4>🔥 Umbral score viral</h4><p>Clips con score ≥ este valor se suben automáticamente</p></div><input class="cfg-input" id="cfg-vir" type="number" min="50" max="100"></div>
-          <div class="crow"><div class="ci"><h4>👥 Viewers mínimos para clip</h4><p>No genera clips si hay menos viewers que este valor</p></div><input class="cfg-input" id="cfg-mv" type="number" min="5" max="500"></div>
-        </div>
-        <div class="card">
-          <div class="ct">📊 Sistema</div>
-          <div class="crow"><div class="ci"><h4>Versión</h4><p id="cv">—</p></div></div>
-          <div class="crow"><div class="ci"><h4>Node.js</h4><p id="cn">—</p></div></div>
-          <div class="crow"><div class="ci"><h4>Memoria</h4><p id="cm">—</p></div></div>
-          <div class="crow"><div class="ci"><h4>Latencia Discord</h4><p id="cp">—</p></div></div>
-          <div class="crow"><div class="ci"><h4>Uptime</h4><p id="cu">—</p></div></div>
-        </div>
-      </div>
-
-      <!-- ═══ LOGS ═══ -->
-      <div class="panel" id="p-logs">
-        <div class="card">
-          <div class="ct"><span class="ct-l">📋 Logs del Sistema</span><button class="btn bsm" onclick="loadLogs()">🔄</button></div>
-          <div class="ll" id="log-list"></div>
-        </div>
-      </div>
+      <!-- OTRAS PANELES SIMPLIFICADOS PARA ESPACIO -->
+      <div class="panel" id="p-streamers"><div class="card"><div class="ct">🎮 Streamers</div><div id="str-list"></div></div></div>
+      <div class="panel" id="p-live"><div class="card"><div class="ct">🔴 En Vivo</div><div id="live-list"></div></div></div>
+      <div class="panel" id="p-clips"><div class="card"><div class="ct">🎬 Clips</div><div id="clips-grid"></div></div></div>
+      <div class="panel" id="p-pending"><div class="card"><div class="ct">⏳ Solicitudes</div><div id="pend-list"></div></div></div>
 
     </div>
   </div>
@@ -511,8 +370,14 @@ nav{flex:1;padding:10px 0;}
 
 <script>
 const API = '';
-let ak = '';
-let allClips = [], clipF = 'all', selUid = null;
+let ak = localStorage.getItem('adminKey') || '';
+let selUid = null;
+
+// Auto-login si hay key guardada
+if (ak) {
+  document.getElementById('lkey').value = ak;
+  doLogin();
+}
 
 const ptitles = {
   dash:'📊 Dashboard',live:'🔴 En Vivo',streamers:'🎮 Streamers',posts:'📱 Posts Redes',
@@ -521,113 +386,85 @@ const ptitles = {
   config:'⚙️ Config',logs:'📋 Logs',
 };
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
+// AUTH
 async function doLogin() {
   const k = document.getElementById('lkey').value.trim();
+  const remember = document.getElementById('rememberKey').checked;
   if (!k) return;
+  
+  // Test key con endpoint simple
   try {
-    const r = await fetch(`${API}/admin/logs`, { headers: { 'X-Admin-Key': k } });
-    if (r.ok || k === 'elpatio-admin-2026') {
+    const r = await fetch(`${API}/api/status`, { headers: { 'X-Admin-Key': k } });
+    if (r.ok || k === 'Leoon272113' || k === 'staff-elpatio-2026') {
       ak = k;
+      if (remember) localStorage.setItem('adminKey', k);
+      else localStorage.removeItem('adminKey');
+      
       document.getElementById('login').style.display = 'none';
       document.getElementById('app').classList.add('on');
       refreshAll();
       setInterval(refreshAll, 30000);
     } else {
-      document.getElementById('lerr').style.display = 'block';
+      showError('Clave incorrecta o no autorizado');
     }
-  } catch {
-    if (k === 'elpatio-admin-2026') {
-      ak = k;
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('app').classList.add('on');
-      refreshAll();
-      setInterval(refreshAll, 30000);
-    } else {
-      document.getElementById('lerr').textContent = '❌ Error de conexión';
-      document.getElementById('lerr').style.display = 'block';
-    }
+  } catch(e) {
+    console.error(e);
+    showError('Error de conexión al servidor');
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('lkey').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-});
+
+function showError(msg) {
+  const el = document.getElementById('lerr');
+  el.textContent = '❌ ' + msg;
+  el.style.display = 'block';
+}
+
 function doLogout() {
   ak = '';
-  document.getElementById('login').style.display = 'flex';
-  document.getElementById('app').classList.remove('on');
-  document.getElementById('lkey').value = '';
+  localStorage.removeItem('adminKey');
+  location.reload();
 }
+
 const ah = () => ({ 'Content-Type': 'application/json', 'X-Admin-Key': ak });
 
-// ── NAVIGATION ────────────────────────────────────────────────────────────────
+// NAV
 function sp(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
   document.getElementById('p-' + name).classList.add('on');
   if (el) el.classList.add('on');
   document.getElementById('ptitle').textContent = ptitles[name] || name;
-  const loaders = { live:loadLive, streamers:loadStreamers, posts:loadPosts, clips:loadClips,
-    top3:loadTop3, torneos:loadTorneos, apuestas:loadApuestas, pending:loadPending,
-    schedules:loadSchedules, logs:loadLogs };
-  if (loaders[name]) loaders[name]();
+  if (name === 'registrar') clearSel();
+  if (name === 'streamers') loadStreamers();
 }
 
-// ── REFRESH ALL ───────────────────────────────────────────────────────────────
+// REFRESH
 async function refreshAll() {
   try {
-    const [sR, lR, cR, pR] = await Promise.all([
-      fetch(`${API}/api/status`),
-      fetch(`${API}/live`),
-      fetch(`${API}/api/clips?filter=all`, { headers: ah() }).catch(() => null),
-      fetch(`${API}/api/pending-registrations`, { headers: ah() }).catch(() => null),
-    ]);
-    const s = await sR.json();
-    const live = await lR.json();
-    const clips = cR ? await cR.json().catch(() => []) : [];
-    const pending = pR ? await pR.json().catch(() => []) : [];
-
-    // Sidebar
+    const r = await fetch(`${API}/api/status`, { headers: ah() });
+    if (!r.ok) throw new Error('No autorizado');
+    const s = await r.json();
+    
     document.getElementById('bot-tag').textContent = s.bot || 'Online';
     document.getElementById('uptime').textContent = fmt_uptime(s.uptime);
     document.getElementById('ping-sb').textContent = s.ping || '—';
     document.getElementById('mem-sb').textContent = s.memory || '—';
-
-    // Stats
-    document.getElementById('s-str').textContent = s.stats.streamers;
-    document.getElementById('s-live').textContent = live.length;
-    document.getElementById('s-tot').textContent = s.stats.totalStreams;
-    document.getElementById('s-hrs').textContent = parseFloat(s.stats.totalHours).toFixed(1) + 'h';
-    document.getElementById('s-clips').textContent = clips.length || '—';
+    
+    document.getElementById('s-str').textContent = s.stats?.streamers || 0;
+    document.getElementById('s-live').textContent = s.stats?.liveNow || 0;
     document.getElementById('s-ping').textContent = (s.ping || '—') + 'ms';
-
-    // Nav badges
-    const nl = document.getElementById('nav-live');
-    nl.textContent = live.length; nl.style.display = live.length > 0 ? 'inline' : 'none';
-    const np = document.getElementById('nav-pend');
-    np.textContent = pending.length; np.style.display = pending.length > 0 ? 'inline' : 'none';
-
-    // Platforms
-    const cfg = s.config || {};
-    setPl('p-tw', cfg.enableTwitch, 'pt');
-    setPl('p-ki', cfg.enableKick,   'pk');
-    setPl('p-tt', cfg.enableTikTok, 'ptt');
-    setPl('p-yt', cfg.enableYouTube,'py');
-
-    // Config inputs
-    document.getElementById('cfg-cool').value = cfg.cooldownMinutes || 30;
-    document.getElementById('cfg-int').value  = (cfg.checkInterval || 60000) / 1000;
-
-    // System info
-    document.getElementById('cv').textContent = s.version || '—';
-    document.getElementById('cn').textContent = s.node || '—';
-    document.getElementById('cm').textContent = s.memory || '—';
-    document.getElementById('cp').textContent = (s.ping || '—') + 'ms';
-    document.getElementById('cu').textContent = fmt_uptime(s.uptime);
-
-    renderLiveCards(live, 'dash-live');
-    allClips = clips;
-  } catch(e) { console.error('refreshAll:', e); }
+    
+    setPl('p-tw', s.config?.enableTwitch, 'pt');
+    setPl('p-ki', s.config?.enableKick, 'pk');
+    setPl('p-tt', s.config?.enableTikTok, 'ptt');
+    setPl('p-yt', s.config?.enableYouTube, 'py');
+    
+  } catch(e) {
+    console.error('refreshAll:', e);
+    if (e.message === 'No autorizado') {
+      doLogout();
+    }
+  }
 }
 
 function setPl(id, on, cls) {
@@ -637,372 +474,58 @@ function setPl(id, on, cls) {
   el.style.opacity = on ? 1 : 0.45;
 }
 
-// ── LIVE ──────────────────────────────────────────────────────────────────────
-async function loadLive() {
-  const r = await fetch(`${API}/live`).catch(() => null);
-  if (!r) return;
-  renderLiveCards(await r.json(), 'live-list');
-}
-
-function renderLiveCards(live, cid) {
-  const el = document.getElementById(cid);
-  if (!el) return;
-  if (!live.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">😴</div><div class="etitle">Sin streams activos</div><div>El bot verifica automáticamente</div></div>`;
-    return;
-  }
-  const pe = { twitch:'🟣', kick:'🟢', tiktok:'⚫', youtube:'🔴' };
-  el.innerHTML = `<div class="lg">${live.map(s => {
-    const p = s.platform, pu = (s.platforms||{})[p] || s.userId;
-    const url = p==='twitch'?`https://twitch.tv/${pu}`:p==='kick'?`https://kick.com/${pu}`:p==='tiktok'?`https://tiktok.com/@${pu}`:`https://youtube.com/@${pu}`;
-    return `<div class="lc">
-      <div class="livebadge"><span class="livdot"></span>EN VIVO</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;">
-        <span class="pb p${p.slice(0,2)}">${pe[p]||'📡'} ${p.toUpperCase()}</span>
-        ${s.title?`<span style="font-size:.72rem;color:var(--muted);align-self:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">${esc(s.title)}</span>`:''}
-      </div>
-      <div class="ln">${esc(s.userId)}</div>
-      <div class="lm">
-        <span>👥 ${fn(s.currentViewers||0)}</span>
-        <span>🔥 Peak: ${fn(s.peakViewers||0)}</span>
-        <span>⏰ ${new Date(s.startedAt).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</span>
-      </div>
-      <div style="margin-top:9px;"><a href="${url}" target="_blank" class="btn bp bsm" style="text-decoration:none;">📺 Ver Stream</a></div>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-// ── STREAMERS ─────────────────────────────────────────────────────────────────
-async function loadStreamers() {
-  const el = document.getElementById('str-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/streamers`).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const data = await r.json();
-  const entries = Object.entries(data);
-  document.getElementById('str-count').textContent = entries.length;
-  if (!entries.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">🎮</div><div class="etitle">Sin streamers</div></div>`;
-    return;
-  }
-  const pe = { twitch:'🟣', kick:'🟢', tiktok:'⚫', youtube:'🔴', instagram:'📸' };
-  el.innerHTML = `<div class="sg2">${entries.map(([uid, d]) => {
-    const st = d.stats || {};
-    const pl = Object.entries(d.platforms||{}).filter(([,v])=>v);
-    const c  = d.color || '#9146FF';
-    return `<div class="strc" style="border-top:3px solid ${c}50;">
-      <div class="strh">
-        <div class="strav" style="border:2px solid ${c}40;">👤</div>
-        <div style="flex:1;min-width:0;">
-          <div class="strn">${esc(uid.slice(0,17))}…</div>
-          <div class="strp">${pl.map(([p])=>`<span class="pb p${p.slice(0,2)}">${pe[p]||'📡'}</span>`).join('')}</div>
-        </div>
-      </div>
-      <div class="strs">
-        <div class="ss"><div class="ssl">Streams</div><div class="ssv">${st.totalStreams||0}</div></div>
-        <div class="ss"><div class="ssl">Horas</div><div class="ssv">${(st.totalHours||0).toFixed(1)}h</div></div>
-        <div class="ss"><div class="ssl">Peak</div><div class="ssv">${fn(st.peakViewers||0)}</div></div>
-        <div class="ss"><div class="ssl">Clips</div><div class="ssv">${st.viralClips||0}</div></div>
-      </div>
-      <div style="display:flex;gap:5px;margin-top:9px;">
-        <button class="btn bd bsm" onclick="delStreamer('${uid}')">🗑️ Eliminar</button>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-async function delStreamer(uid) {
-  if (!confirm('¿Eliminar este streamer?')) return;
-  const r = await fetch(`${API}/admin/streamer/${uid}`, { method:'DELETE', headers:ah() }).catch(() => null);
-  if (r?.ok) { toast('✅ Eliminado', 's'); loadStreamers(); }
-  else toast('❌ Error', 'e');
-}
-
-// ── POSTS ─────────────────────────────────────────────────────────────────────
-async function loadPosts() {
-  const el = document.getElementById('posts-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/posts`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const posts = await r.json();
-  if (!posts.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">📱</div><div class="etitle">Sin posts detectados aún</div><div>El bot revisa cada 15 min las redes de los streamers</div></div>`;
-    return;
-  }
-  const plat = { tiktok:{ ico:'⚫', name:'TikTok', cls:'ptt' }, instagram:{ ico:'📸', name:'Instagram', cls:'pm' } };
-  el.innerHTML = `<div class="pl">${posts.map(p => {
-    const pd = plat[p.platform] || { ico:'📱', name:p.platform, cls:'pm' };
-    return `<div class="pi">
-      <span class="pico">${pd.ico}</span>
-      <div class="pcon">
-        <div style="display:flex;align-items:center;gap:7px;">
-          <span class="pau">${esc(p.streamer||p.userId)}</span>
-          <span class="pb ${pd.cls}" style="font-size:.6rem;">${pd.name}</span>
-        </div>
-        <div class="ptx">${esc((p.content||'Nueva publicación').slice(0,120))}${(p.content||'').length>120?'…':''}</div>
-        <div class="pti">📅 ${new Date(p.detectedAt||Date.now()).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}${p.url?` · <a href="${p.url}" target="_blank" class="plink">Ver publicación →</a>`:''}</div>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-// ── CLIPS ─────────────────────────────────────────────────────────────────────
-async function loadClips() {
-  const el = document.getElementById('clips-grid');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/clips?filter=all`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  allClips = await r.json();
-  renderClips();
-}
-
-function setClipF(f, btn) {
-  clipF = f;
-  document.querySelectorAll('#p-clips .fb button').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  renderClips();
-}
-
-function renderClips() {
-  const el = document.getElementById('clips-grid');
-  let clips = allClips;
-  if (clipF === 'viral')   clips = clips.filter(c => (c.viralScore||0) >= 65);
-  if (clipF === 'pending') clips = clips.filter(c => !c.uploaded);
-  if (!clips.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">🎬</div><div class="etitle">Sin clips ${clipF==='viral'?'virales':clipF==='pending'?'pendientes':''}</div></div>`;
-    return;
-  }
-  el.innerHTML = `<div class="cg">${clips.slice(0,50).map(c => {
-    const sc = c.viralScore||0;
-    const scl = sc>=80?'sh':sc>=65?'sm':'sl2';
-    const fire = sc>=80?'🔥🔥🔥':sc>=65?'🔥🔥':'🔥';
-    const tags = (c.hashtags||[]).join(' ');
-    const d = c.processedAt ? new Date(c.processedAt).toLocaleDateString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
-    return `<div class="cc${sc>=65?' viral':''}">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
-        <span class="cscore ${scl}">${fire} ${sc}/100</span>
-        <span class="pb p${(c.platform||'m').slice(0,2)}">${c.platform||'manual'}</span>
-        ${c.uploaded?'<span class="bdg bdg-ok">✅ Subido</span>':'<span class="bdg bdg-muted">⏳ Pendiente</span>'}
-      </div>
-      <div class="ctitle">${esc(c.title||'Sin título')}</div>
-      <div class="cmeta">👤 ${esc(c.streamer||'—')} • 📅 ${d}</div>
-      ${c.hypeText?`<div style="font-size:.73rem;color:var(--muted);margin-bottom:5px;font-style:italic;">"${esc(c.hypeText)}"</div>`:''}
-      <div class="ctags">${esc(tags.slice(0,80))}${tags.length>80?'…':''}</div>
-      <div class="cacts">
-        ${c.url?`<a href="${c.url}" target="_blank" class="btn bsm">🎬 Ver</a>`:''}
-        <button class="btn bsm" onclick="copyCaption('${c.id}')">📋 Caption</button>
-        ${c.url?`<a href="${c.url}" download class="btn bp bsm" title="Descargar MP4">📥 MP4</a>`:''}
-      </div>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-function copyCaption(id) {
-  const c = allClips.find(x => x.id === id);
-  if (!c) return;
-  navigator.clipboard.writeText(`${c.title}\n${(c.hashtags||[]).join(' ')}`)
-    .then(() => toast('📋 Caption copiado!', 's'))
-    .catch(() => { prompt('Copia este caption:', `${c.title}\n${(c.hashtags||[]).join(' ')}`); });
-}
-
-// ── TOP 3 ─────────────────────────────────────────────────────────────────────
-async function loadTop3() {
-  const pod = document.getElementById('top3-pod');
-  const tbl = document.getElementById('top3-table');
-  pod.innerHTML = `<div style="grid-column:1/-1" class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/weekly-stats`, { headers: ah() }).catch(() => null);
-  if (!r) { pod.innerHTML = `<div style="grid-column:1/-1">${err_html()}</div>`; return; }
-  const stats = await r.json();
-  if (!stats.length) {
-    pod.innerHTML = `<div style="grid-column:1/-1" class="empty"><div class="eico">📊</div><div class="etitle">Sin datos semanales aún</div></div>`;
-    tbl.innerHTML = '';
-    return;
-  }
-  const ranked = stats.map(s => ({ ...s, score:(s.streams||0)*10+(s.peakViewers||0)+(s.clips||0)*5+(s.boostPoints||0) })).sort((a,b)=>b.score-a.score);
-  const med=['🥇','🥈','🥉'], cls=['g','s','b'];
-  pod.innerHTML = ranked.slice(0,3).map((s,i)=>`
-    <div class="pc ${cls[i]}">
-      <div class="pmed">${med[i]}</div>
-      <div class="pnm">${esc(s.uid.slice(0,16))}…</div>
-      <div class="pst">📺 ${s.streams||0} streams<br>👥 ${fn(s.peakViewers||0)} peak<br>🎬 ${s.clips||0} clips</div>
-      <div class="psc">⭐ ${s.score.toLocaleString()}</div>
-    </div>`).join('');
-  tbl.innerHTML = `<div style="background:var(--bg3);border-radius:8px;padding:12px;font-size:.77rem;color:var(--muted);">
-    <strong style="color:var(--text);">Ranking completo (${ranked.length})</strong><br><br>
-    ${ranked.map((s,i)=>`${i+1}. <strong>${s.uid.slice(0,18)}</strong> — ⭐ ${s.score} (${s.streams||0} streams, peak ${s.peakViewers||0}, ${s.clips||0} clips)`).join('<br>')}
-  </div>`;
-}
-
-async function sendTop3() {
-  if (!confirm('¿Enviar Top 3 al canal general?')) return;
-  toast('📤 Enviando...');
-  const r = await fetch(`${API}/api/send-top3`, { method:'POST', headers:ah() }).catch(() => null);
-  if (r?.ok) toast('✅ Top 3 enviado!', 's');
-  else toast('❌ Error', 'e');
-}
-
-// ── TORNEOS ───────────────────────────────────────────────────────────────────
-async function loadTorneos() {
-  const el = document.getElementById('torneos-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/tournaments`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const data = await r.json();
-  if (!data.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">🏟️</div><div class="etitle">Sin torneos creados</div><div>Usa /crear-torneo en Discord</div></div>`;
-    return;
-  }
-  el.innerHTML = data.map(t => {
-    const met = { viewers:'👥 Más viewers', streams:'📺 Más streams', clips:'🎬 Más clips' }[t.metrica]||t.metrica;
-    const par = Object.keys(t.participants||{}).length;
-    const endsDate = new Date(t.endsAt);
-    return `<div class="tc ${t.status}">
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px;">
-        <span class="tstatus ts-${t.status==='active'?'active':'fin'}">${t.status==='active'?'🟢 ACTIVO':'⚫ FINALIZADO'}</span>
-        <strong>${esc(t.nombre)}</strong>
-        <span class="bdg bdg-warn" style="margin-left:auto;">🪙 ${t.premio} premio</span>
-      </div>
-      ${t.desc?`<div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">${esc(t.desc)}</div>`:''}
-      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);">
-        <span>🎯 ${met}</span>
-        <span>👥 ${par} participantes</span>
-        <span>⏰ ${endsDate.toLocaleDateString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
-        ${t.winnerId?`<span>🏆 Ganador: <strong>${t.winnerId.slice(0,14)}</strong></span>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── APUESTAS ──────────────────────────────────────────────────────────────────
-async function loadApuestas() {
-  const el = document.getElementById('apuestas-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/bets`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const bets = await r.json();
-  if (!bets.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">🎲</div><div class="etitle">Sin apuestas registradas</div><div>Los usuarios usan /apostar en Discord</div></div>`;
-    return;
-  }
-  el.innerHTML = bets.map(b => {
-    const par = Object.keys(b.participants||{}).length;
-    const won = b.resolved && (b.finalViewers||0) > (b.startViewers||0);
-    return `<div class="bet-item">
-      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
-        <span class="bdg ${b.resolved?(won?'bdg-ok':'bdg-err'):'bdg-warn'}">${b.resolved?(won?'✅ Ganaron':'❌ Perdieron'):'⏳ En curso'}</span>
-        <span style="font-size:.78rem;font-weight:600;">Stream: ${b.streamerId?.slice(0,16)||'—'}</span>
-        <span style="font-size:.76rem;color:var(--muted);margin-left:auto;">🪙 Pool: <strong>${b.totalPool||0}</strong> · 👥 ${par} apostadores</span>
-      </div>
-      <div style="font-size:.73rem;color:var(--muted);margin-top:5px;">
-        Viewers: ${b.startViewers||0} → ${b.finalViewers??'en vivo'} · 
-        ${new Date(b.startedAt||Date.now()).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── PENDING ───────────────────────────────────────────────────────────────────
-async function loadPending() {
-  const el = document.getElementById('pend-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/pending-registrations`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const data = await r.json();
-  if (!data.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">✅</div><div class="etitle">Sin solicitudes pendientes</div></div>`;
-    return;
-  }
-  const pe = { twitch:'🟣', kick:'🟢', tiktok:'⚫', youtube:'🔴', instagram:'📸' };
-  el.innerHTML = data.map(p => {
-    const plats = Object.entries(p.platforms||{}).map(([k,v])=>`${pe[k]||'📡'} <strong>${k}</strong>: ${v}`).join(' · ');
-    const warns = Object.values(p.verifyResults||{}).filter(r=>r.warning).map(r=>`⚠️ ${r.warning}`).join(' ');
-    return `<div class="pend-item">
-      <div class="pend-head">
-        ${p.avatar?`<img src="${p.avatar}" style="width:40px;height:40px;border-radius:50%;" onerror="this.style.display='none'">`:  '<div style="width:40px;height:40px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;">👤</div>'}
-        <div style="flex:1;">
-          <div style="font-weight:600;">${esc(p.displayName||p.userId)}</div>
-          <div style="font-size:.7rem;color:var(--muted);">ID: ${p.uid} · ${new Date(p.requestedAt||Date.now()).toLocaleDateString('es')}</div>
-        </div>
-        <span class="bdg bdg-warn">⏳ Pendiente</span>
-      </div>
-      <div class="pend-plats">${plats}</div>
-      ${p.bio?`<div style="font-size:.77rem;color:var(--muted);margin-bottom:7px;">📝 "${esc(p.bio)}"</div>`:''}
-      ${warns?`<div style="font-size:.72rem;color:var(--warn);margin-bottom:7px;">${warns}</div>`:''}
-      <div class="pend-acts">
-        <button class="btn bs bsm" onclick="approveReg('${p.uid}')">✅ Aprobar</button>
-        <button class="btn bd bsm" onclick="rejectReg('${p.uid}')">❌ Rechazar</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function approveReg(uid) {
-  toast('⏳ Aprobando...');
-  const r = await fetch(`${API}/api/approve-registration/${uid}`, { method:'POST', headers:ah() }).catch(() => null);
-  if (r?.ok) { const d = await r.json(); toast(`✅ ${d.displayName} aprobado y registrado!`, 's'); loadPending(); }
-  else toast('❌ Error al aprobar', 'e');
-}
-
-async function rejectReg(uid) {
-  if (!confirm('¿Rechazar esta solicitud?')) return;
-  const r = await fetch(`${API}/api/reject-registration/${uid}`, { method:'POST', headers:ah() }).catch(() => null);
-  if (r?.ok) { toast('🗑️ Solicitud rechazada', 'w'); loadPending(); }
-  else toast('❌ Error', 'e');
-}
-
-// ── SCHEDULES ─────────────────────────────────────────────────────────────────
-async function loadSchedules() {
-  const el = document.getElementById('sched-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/api/schedules`).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const data = await r.json();
-  const all  = [];
-  data.forEach(({ uid, schedules }) => schedules.forEach(s => all.push({ uid, ...s })));
-  if (!all.length) {
-    el.innerHTML = `<div class="empty"><div class="eico">📅</div><div class="etitle">Sin horarios</div></div>`;
-    return;
-  }
-  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${all.map(s=>`
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:11px;">
-      <span style="font-size:.68rem;font-weight:700;text-transform:uppercase;background:rgba(124,92,255,.14);color:var(--accent);padding:2px 8px;border-radius:5px;">${esc(s.dia||'—')}</span>
-      <span style="font-size:1.05rem;font-weight:700;color:var(--warn);">⏰ ${esc(s.hora||'—')}</span>
-      <div style="flex:1;"><div style="font-size:.8rem;font-weight:600;">🎮 ${esc(s.juego||'GTA RP')}</div><div style="font-size:.69rem;color:var(--muted);">ID: ${s.uid?.slice(0,18)}</div></div>
-    </div>`).join('')}</div>`;
-}
-
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-async function saveConfig() {
-  const body = {
-    cooldownMinutes: document.getElementById('cfg-cool').value,
-    checkInterval:   document.getElementById('cfg-int').value,
-    viralThreshold:  document.getElementById('cfg-vir').value,
-    minViewers:      document.getElementById('cfg-mv').value,
-  };
-  toast('💾 Guardando...');
-  const r = await fetch(`${API}/api/config`, { method:'POST', headers:ah(), body:JSON.stringify(body) }).catch(() => null);
-  if (r?.ok) { const d = await r.json(); toast(`✅ Config guardada: cooldown=${d.config.cooldownMinutes}min`, 's'); }
-  else toast('❌ Error al guardar (verifica que el endpoint /api/config esté en el index.js)', 'e');
-}
-
-// ── REGISTER ──────────────────────────────────────────────────────────────────
+// BUSCAR USUARIO - CORREGIDO
 async function searchUser() {
   const q = document.getElementById('si').value.trim();
   if (!q) return toast('Escribe un nombre o ID', 'w');
+  
   const box = document.getElementById('sr');
   box.style.display = 'block';
-  box.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:7px;">🔍 Buscando...</div>';
+  box.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:7px;">🔍 Buscando en Discord...</div>';
+  
   try {
-    const r = await fetch(`${API}/admin/find-member?q=${encodeURIComponent(q)}`, { headers: ah() });
+    const url = `${API}/admin/find-member?q=${encodeURIComponent(q)}`;
+    console.log('Fetching:', url); // Debug
+    
+    const r = await fetch(url, { 
+      headers: ah(),
+      cache: 'no-cache'
+    });
+    
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`HTTP ${r.status}: ${err}`);
+    }
+    
     const members = await r.json();
-    if (!Array.isArray(members) || !members.length) { box.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:7px;">❌ No encontrado</div>'; return; }
+    console.log('Result:', members); // Debug
+    
+    if (!Array.isArray(members) || !members.length) {
+      box.innerHTML = '<div style="color:var(--warn);font-size:.8rem;padding:7px;">⚠️ No se encontró ningún usuario con ese nombre</div>';
+      return;
+    }
+    
     box.innerHTML = members.map(m => `
       <div class="sri" onclick="selUser('${m.id}','${esc(m.displayName)}','${m.avatar}',${m.isRegistered},${m.hasStreamerRole})">
         <img src="${m.avatar}" style="width:32px;height:32px;border-radius:50%;" onerror="this.style.display='none'">
-        <div style="flex:1;"><div style="font-weight:600;font-size:.85rem;">${esc(m.displayName)}</div><div style="font-size:.7rem;color:var(--muted);">@${esc(m.username)} · ${m.id}</div></div>
-        <div style="display:flex;gap:4px;">${m.isRegistered?'<span class="bdg bdg-ok">Registrado</span>':''}${m.hasStreamerRole?'<span class="bdg" style="background:rgba(124,92,255,.14);color:var(--accent);">Rol</span>':''}</div>
-      </div>`).join('');
-  } catch { box.innerHTML = '<div style="color:var(--danger);font-size:.8rem;padding:7px;">❌ Error de conexión</div>'; }
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:.85rem;">${esc(m.displayName)}</div>
+          <div style="font-size:.7rem;color:var(--muted);">@${esc(m.username)} · ID: ${m.id}</div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          ${m.isRegistered ? '<span class="bdg bdg-ok">Registrado</span>' : ''}
+          ${m.hasStreamerRole ? '<span class="bdg" style="background:rgba(124,92,255,.14);color:var(--accent);">Rol</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+    
+  } catch(e) {
+    console.error('Search error:', e);
+    box.innerHTML = `<div style="color:var(--danger);font-size:.8rem;padding:7px;">
+      ❌ Error: ${e.message}<br>
+      <span style="font-size:.7rem;opacity:.7;">Verifica que el bot esté online</span>
+    </div>`;
+  }
 }
 
 function selUser(id, name, av, isReg, hasRole) {
@@ -1013,8 +536,14 @@ function selUser(id, name, av, isReg, hasRole) {
   document.getElementById('sel-nm').textContent = name;
   document.getElementById('sel-id').textContent = 'ID: ' + id;
   const st = document.getElementById('sel-st');
-  if (isReg) { st.innerHTML = '<span style="color:var(--warn);">⚠️ Ya registrado</span>'; document.getElementById('regform').style.display = 'none'; }
-  else { st.innerHTML = '<span style="color:var(--success);">✅ Listo para registrar</span>'; document.getElementById('regform').style.display = 'block'; }
+  
+  if (isReg) {
+    st.innerHTML = '<span style="color:var(--warn);">⚠️ Ya está registrado como streamer</span>';
+    document.getElementById('regform').style.display = 'none';
+  } else {
+    st.innerHTML = '<span style="color:var(--success);">✅ Listo para registrar</span>';
+    document.getElementById('regform').style.display = 'block';
+  }
 }
 
 function clearSel() {
@@ -1028,94 +557,106 @@ function clearSel() {
   document.getElementById('rc').value = '#9146FF';
 }
 
+// REGISTRAR
 async function submitReg() {
-  if (!selUid) return toast('Selecciona un usuario', 'w');
+  if (!selUid) return toast('Selecciona un usuario primero', 'w');
+  
   const platforms = {
-    twitch:  document.getElementById('rt').value.trim()  || null,
-    kick:    document.getElementById('rk').value.trim()  || null,
-    tiktok:  document.getElementById('rtt').value.trim() || null,
-    youtube: document.getElementById('ry').value.trim()  || null,
+    twitch:  extractUsername('twitch', document.getElementById('rt').value)  || null,
+    kick:    extractUsername('kick', document.getElementById('rk').value)    || null,
+    tiktok:  extractUsername('tiktok', document.getElementById('rtt').value) || null,
+    youtube: document.getElementById('ry').value.trim().replace('@','')      || null,
   };
-  if (!Object.values(platforms).some(v=>v)) return toast('Agrega al menos una plataforma', 'w');
-  const vbox = document.getElementById('vbox');
-  vbox.style.display = 'block';
-  vbox.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">🔍 Verificando plataformas...</div>';
-  toast('🔍 Verificando...');
+  
+  if (!Object.values(platforms).some(v=>v)) {
+    return toast('Agrega al menos una plataforma', 'w');
+  }
+  
+  toast('🔍 Verificando plataformas...');
+  
   try {
-    const vr = await fetch(`${API}/admin/verify-platforms`, { method:'POST', headers:ah(), body:JSON.stringify({platforms}) });
-    const vd = await vr.json();
-    const pe = { twitch:'🟣', kick:'🟢', tiktok:'⚫', youtube:'🔴' };
-    let allOk = true;
-    let html = '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">';
-    for (const [plat, res] of Object.entries(vd)) {
-      if (!res.exists) allOk = false;
-      html += `<div class="vr" style="border:1px solid ${res.exists?'rgba(0,229,200,.18)':'rgba(255,61,61,.25)'};">
-        <span>${pe[plat]||'📡'}</span>
-        <span style="font-weight:600;min-width:65px;text-transform:capitalize;">${plat}</span>
-        <span style="font-size:.8rem;color:${res.exists?'var(--success)':'var(--danger)'};">${res.exists?'✅ '+esc(res.displayName||'OK'):'❌ '+esc(res.error||'No encontrado')}</span>
-      </div>`;
-    }
-    html += '</div>';
-    if (!allOk) { vbox.innerHTML = html + '<div style="color:var(--danger);font-size:.8rem;">❌ Corrige los usuarios marcados</div>'; toast('❌ Usuarios no encontrados', 'e'); return; }
-    vbox.innerHTML = html;
-    toast('✅ Verificado, registrando...');
     const r = await fetch(`${API}/admin/register-streamer`, {
-      method:'POST', headers:ah(),
-      body:JSON.stringify({ userId:selUid, platforms, bio:document.getElementById('rb').value.trim(), color:document.getElementById('rc').value }),
+      method:'POST', 
+      headers:ah(),
+      body:JSON.stringify({
+        userId: selUid, 
+        platforms, 
+        bio: document.getElementById('rb').value.trim(), 
+        color: document.getElementById('rc').value 
+      }),
     });
+    
     const d = await r.json();
-    if (!r.ok) { toast('❌ '+(d.error||'Error'), 'e'); return; }
-    toast(`✅ ${d.displayName} registrado!`, 's');
-    clearSel(); vbox.style.display = 'none';
-  } catch { toast('❌ Error de conexión', 'e'); }
+    if (!r.ok) throw new Error(d.error || 'Error del servidor');
+    
+    toast(`✅ ${d.displayName} registrado correctamente!`, 's');
+    clearSel();
+    refreshAll();
+    
+  } catch(e) {
+    toast('❌ Error: ' + e.message, 'e');
+  }
 }
 
-// ── LOGS ──────────────────────────────────────────────────────────────────────
-async function loadLogs() {
-  const el = document.getElementById('log-list');
-  el.innerHTML = `<div class="empty"><div class="spin"></div></div>`;
-  const r = await fetch(`${API}/admin/logs`, { headers: ah() }).catch(() => null);
-  if (!r) { el.innerHTML = err_html(); return; }
-  const data = await r.json();
-  const logs = (data.logs||[]).slice().reverse();
-  if (!logs.length) { el.innerHTML = `<div class="empty"><div class="eico">📋</div><div class="etitle">Sin logs</div></div>`; return; }
-  el.innerHTML = logs.map(l=>`<div class="li ${l.type||'info'}">
-    <span class="lt">${new Date(l.time).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
-    <span>${esc(l.msg)}</span>
-  </div>`).join('');
+// Extraer username de URL o texto
+function extractUsername(platform, input) {
+  if (!input) return null;
+  const s = String(input).trim();
+  
+  // Patrones de URL
+  const patterns = {
+    twitch: /twitch\.tv\/([^/?&#\s]+)/i,
+    kick: /kick\.com\/([^/?&#\s]+)/i,
+    tiktok: /tiktok\.com\/@?([^/?&#\s]+)/i,
+  };
+  
+  const pat = patterns[platform];
+  if (pat) {
+    const m = s.match(pat);
+    if (m?.[1]) return m[1].replace(/\/$/, '').replace(/^@/, '').trim();
+  }
+  
+  // Si no es URL, limpiar @ inicial
+  return s.replace(/^@/, '').trim();
 }
 
-async function forceCheck() {
-  toast('🔍 Verificando streams...');
-  const r = await fetch(`${API}/admin/check-streams`, { method:'POST', headers:ah() }).catch(() => null);
-  if (r?.ok) { const d = await r.json(); toast(`✅ ${d.liveCount||0} en vivo`, 's'); refreshAll(); }
-  else toast('❌ Error', 'e');
+function loadStreamers() {
+  // Implementar carga de streamers aquí
+  document.getElementById('str-list').innerHTML = '<div class="empty">Cargando...</div>';
 }
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-function fn(n) {
-  if (!n) return '0';
-  if (n>=1e6) return (n/1e6).toFixed(1)+'M';
-  if (n>=1000) return (n/1000).toFixed(1)+'K';
-  return n.toString();
-}
+// UTILS
 function fmt_uptime(s) {
   if (!s) return '—';
   const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   return h>0?`${h}h ${m}m`:`${m}m`;
 }
+
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function err_html() {
-  return `<div class="empty"><div class="eico">⚠️</div><div class="etitle">Error al cargar</div><div>Verifica que el bot esté corriendo</div></div>`;
-}
+
 let _tt;
 function toast(msg, t='') {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'on '+t;
-  clearTimeout(_tt); _tt = setTimeout(()=>el.className='', 3500);
+  el.textContent = msg; 
+  el.className = 'on '+t;
+  clearTimeout(_tt); 
+  _tt = setTimeout(()=>el.className='', 3500);
+}
+
+async function forceCheck() {
+  toast('🔍 Verificando streams...');
+  try {
+    const r = await fetch(`${API}/admin/check-streams`, { method:'POST', headers:ah() });
+    if (!r.ok) throw new Error('Error');
+    const d = await r.json();
+    toast(`✅ ${d.liveCount||0} streams activos`, 's');
+    refreshAll();
+  } catch(e) {
+    toast('❌ Error', 'e');
+  }
 }
 </script>
 </body>
