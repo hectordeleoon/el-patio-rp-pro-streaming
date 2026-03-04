@@ -951,10 +951,29 @@ webApp.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware de autenticación
 function requireAdmin(req, res, next) {
-  const key = req.headers['x-admin-key']||req.query.key||req.body?.key;
-  if (key===config.adminKey) { req.role='admin'; req.userLevel=3; return next(); }
-  if (key===config.staffKey) { req.role='staff'; req.userLevel=2; return next(); }
-  return res.status(401).json({error:'No autorizado. Clave inválida.'});
+  const key = (req.headers['x-admin-key'] || req.query.key || req.body?.key || '').trim();
+  
+  // Debug: Ver qué está llegando (aparecerá en los logs de Railway)
+  console.log('🔑 Intento de login - Key recibida:', key);
+  console.log('🔑 Key esperada (admin):', config.adminKey);
+  console.log('🔑 Key esperada (staff):', config.staffKey);
+  
+  if (key === config.adminKey) { 
+    req.role = 'admin'; 
+    req.userLevel = 3; 
+    console.log('✅ Login como ADMIN');
+    return next(); 
+  }
+  
+  if (key === config.staffKey) { 
+    req.role = 'staff'; 
+    req.userLevel = 2; 
+    console.log('✅ Login como STAFF');
+    return next(); 
+  }
+  
+  console.log('❌ Clave incorrecta');
+  return res.status(401).json({ error: 'No autorizado. Clave inválida.' });
 }
 
 function requireAdminOnly(req, res, next) {
