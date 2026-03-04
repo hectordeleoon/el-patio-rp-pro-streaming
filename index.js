@@ -944,10 +944,29 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// EXPRESS API Y DASHBOARD
-const webApp = express();
-webApp.use(express.json());
-webApp.use(express.static(path.join(__dirname, 'public')));
+// RUTA DE PRUEBA - Sin autenticación
+webApp.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Servidor funcionando', 
+    admin_key_configurada: config.adminKey,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// RUTA LOGIN SIMPLE
+webApp.post('/api/login', (req, res) => {
+  const key = req.body?.key?.trim();
+  console.log('Intento login con key:', key);
+  
+  if (key === config.adminKey) {
+    return res.json({ success: true, role: 'admin' });
+  }
+  if (key === config.staffKey) {
+    return res.json({ success: true, role: 'staff' });
+  }
+  
+  res.status(401).json({ success: false, error: 'Clave inválida' });
+});
 
 // Middleware de autenticación
 function requireAdmin(req, res, next) {
