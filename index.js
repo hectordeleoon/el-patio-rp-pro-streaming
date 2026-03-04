@@ -947,7 +947,7 @@ client.on('interactionCreate', async (interaction) => {
 // EXPRESS API Y DASHBOARD
 const webApp = express();
 webApp.use(express.json());
-webApp.use(express.static(path.join(__dirname)));
+webApp.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware de autenticación
 function requireAdmin(req, res, next) {
@@ -1238,38 +1238,37 @@ webApp.get('/health', (req, res) => {
   });
 });
 
-// STARTUP
-client.once('ready', async () => {
+// STARTUP - Servidor Web PRIMERO (para Railway)
+webApp.listen(config.port, '0.0.0.0', () => {
+  console.log(`🌐 Dashboard activo en puerto ${config.port}`);
+  console.log(`📁 Sirviendo archivos desde: ${path.join(__dirname, 'public')}`);
+});
+
+// Luego el Bot de Discord
+client.once('clientReady', async () => {
   console.log(`🤖 ${client.user.tag} listo!`);
   console.log(`📊 Versión: 9.2 Ultra Notifier`);
-  console.log(`🌐 Web dashboard: http://localhost:${config.port}`);
   
   loadStorage();
   await registerCommands();
   
-  // Iniciar loop de verificación
   setInterval(checkAllStreams, config.notifications.checkInterval);
   console.log(`🔄 Verificación cada ${config.notifications.checkInterval/1000}s`);
-  
-  // Iniciar servidor web
-  webApp.listen(config.port, () => {
-    console.log(`🌐 Dashboard activo en puerto ${config.port}`);
-  });
 });
 
 client.on('error', (e) => logError('Discord Client', e));
 client.on('warn', (w) => console.warn('⚠️ Discord:', w));
 
-// Manejo de cierre graceful
+// Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n👋 Cerrando bot...');
+  console.log('\n👋 Cerrando...');
   saveStorage();
   client.destroy();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n👋 Cerrando por SIGTERM...');
+  console.log('\n👋 Cerrando...');
   saveStorage();
   client.destroy();
   process.exit(0);
