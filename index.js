@@ -1801,3 +1801,558 @@ webApp.listen(config.port, ()=>{
 
 if (!config.discord.token) { console.error('❌ DISCORD_TOKEN no configurado en el .env'); process.exit(1); }
 client.login(config.discord.token).catch(e=>{ console.error('❌ Error de login Discord:', e.message); process.exit(1); });
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔥 PATCH v9.0 — Agregar este bloque ANTES de webApp.listen(config.port, ...)
+// Incluye: Torneos/Eventos · Tienda de Coins · Apuestas · Posts de Redes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── STORAGE NUEVAS COLECCIONES ───────────────────────────────────────────────
+// Agrega estas líneas dentro del objeto `storage` existente:
+/*
+  tournaments:    new Map(), // id → tournamentObj
+  shop:           new Map(), // uid → { purchases: [] }
+  bets:           new Map(), // betId → betObj
+  activeBets:     new Map(), // streamKey → betId
+  posts:          [],        // últimos 50 posts de redes sociales
+  pendingSubs:    new Map(), // uid → [streamerIds] (notificaciones personalizadas)
+*/
+// Y en saveStorage() / loadStorage() agrega los nuevos mapas igual que los demás.
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN A — TIENDA DE COINS
+// ══════════════════════════════════════════════════════
+
+const SHOP_ITEMS = [
+  { id: 'vip_role',    name: '⭐ Rol VIP',           price: 500,  description: 'Rol VIP especial por 30 días', type: 'role' },
+  { id: 'mention',     name: '📣 Mención especial',  price: 200,  description: 'El bot te menciona en el próximo live', type: 'mention' },
+  { id: 'hilo_banner', name: '🎨 Banner en tu hilo', price: 300,  description: 'Imagen banner en tu hilo de foro', type: 'cosmetic' },
+  { id: 'top_boost',   name: '🚀 Boost al Top 3',    price: 150,  description: '+50 puntos en el ranking semanal', type: 'boost' },
+  { id: 'custom_color',name: '🎨 Color personalizado',price: 100, description: 'Cambia el color de tu card en el server', type: 'cosmetic' },
+];
+
+async function handleShop(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const userId = interaction.user.id;
+  const item   = interaction.options.getString('item');
+  const coins  = getCoins(userId);
+
+  if (!item) {
+    // Ver tienda
+    const embed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle('🛒 Tienda de El Patio RP')
+      .setDescription(`💰 Tus coins: **${coins}**\n\nGana coins haciendo stream (10 coins/hora) y teniendo clips virales.\nUsa \`/tienda comprar <item>\` para comprar.`)
+      .addFields(SHOP_ITEMS.map(i => ({
+        name: `${i.name} — ${i.price} 🪙`,
+        value: i.description,
+        inline: true,
+      })))
+      .setTimestamp();
+    return interaction.editReply({ embeds: [embed] });
+  }
+
+  const shopItem = SHOP_ITEMS.find(i => i.id === item);
+  if (!shopItem) return interaction.editReply({ content: '❌ Item no encontrado.' });
+  if (coins < shopItem.price)
+    return interaction.editReply({ content: `❌ No tienes suficientes coins. Tienes **${coins}** y necesitas **${shopItem.price}**.` });
+
+  // Realizar compra
+  addCoins(userId, -shopItem.price, `Compra: ${shopItem.name}`);
+  const purchases = storage.shop.get(userId) || { purchases: [] };
+  purchases.purchases.push({ item: shopItem.id, date: new Date().toISOString(), price: shopItem.price });
+  storage.shop.set(userId, purchases);
+
+  // Aplicar efecto
+  if (shopItem.type === 'role' && process.env.SHOP_VIP_ROLE_ID) {
+    const guild  = client.guilds.cache.get(config.discord.guildId);
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (member) {
+      await member.roles.add(process.env.SHOP_VIP_ROLE_ID).catch(() => {});
+      // Remover rol después de 30 días
+      setTimeout(async () => {
+        await member.roles.remove(process.env.SHOP_VIP_ROLE_ID).catch(() => {});
+      }, 30 * 24 * 60 * 60 * 1000);
+    }
+  }
+
+  if (shopItem.type === 'boost') {
+    const ws = storage.weeklyStats.get(userId) || { streams:0, totalViewers:0, peakViewers:0, clips:0 };
+    ws.boostPoints = (ws.boostPoints || 0) + 50;
+    storage.weeklyStats.set(userId, ws);
+  }
+
+  saveStorage();
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFFD700)
+    .setTitle('✅ Compra exitosa!')
+    .setDescription(`Compraste **${shopItem.name}** por **${shopItem.price} 🪙**\n\n${shopItem.description}\n\n💰 Coins restantes: **${getCoins(userId)}**`)
+    .setTimestamp();
+
+  return interaction.editReply({ embeds: [embed] });
+}
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN B — SISTEMA DE APUESTAS
+// ══════════════════════════════════════════════════════
+
+async function handleApostar(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const userId   = interaction.user.id;
+  const targetId = interaction.options.getUser('streamer').id;
+  const amount   = interaction.options.getInteger('coins');
+  const coins    = getCoins(userId);
+
+  if (amount < 10)   return interaction.editReply({ content: '❌ Apuesta mínima: **10 coins**' });
+  if (coins < amount) return interaction.editReply({ content: `❌ No tienes suficientes coins. Tienes **${coins}**.` });
+
+  // Buscar apuesta activa para este streamer
+  const liveKey = [...storage.liveStreams.keys()].find(k => k.includes(targetId));
+  if (!liveKey) return interaction.editReply({ content: '❌ Ese streamer no está en vivo ahora mismo. Solo puedes apostar a streamers en vivo.' });
+
+  let betId = storage.activeBets.get(liveKey);
+  if (!betId) {
+    betId = `bet-${Date.now()}-${targetId}`;
+    storage.activeBets.set(liveKey, betId);
+    storage.bets.set(betId, {
+      id: betId, streamKey: liveKey, streamerId: targetId,
+      startViewers: storage.liveStreams.get(liveKey)?.currentViewers || 0,
+      participants: {}, totalPool: 0,
+      startedAt: new Date().toISOString(), resolved: false,
+    });
+  }
+
+  const bet = storage.bets.get(betId);
+  if (bet.resolved) return interaction.editReply({ content: '❌ Esta apuesta ya cerró.' });
+  if (bet.participants[userId]) return interaction.editReply({ content: '⚠️ Ya apostaste en este stream. Solo una apuesta por stream.' });
+
+  addCoins(userId, -amount, `Apuesta en ${targetId}`);
+  bet.participants[userId] = { amount, placedAt: new Date().toISOString() };
+  bet.totalPool += amount;
+  storage.bets.set(betId, bet);
+  saveStorage();
+
+  const guild  = client.guilds.cache.get(config.discord.guildId);
+  const target = await guild.members.fetch(targetId).catch(() => null);
+
+  return interaction.editReply({
+    embeds: [new EmbedBuilder()
+      .setColor(0xFF9900)
+      .setTitle('🎲 ¡Apuesta registrada!')
+      .setDescription(`Apostaste **${amount} 🪙** a que **${target?.displayName || 'el streamer'}** sube viewers.\n\nPool total: **${bet.totalPool} 🪙** entre ${Object.keys(bet.participants).length} participantes.\n\nSi el streamer sube viewers al terminar, los ganadores se reparten el pool proporcional.`)
+      .setTimestamp()],
+  });
+}
+
+async function resolveBets(streamKey, finalViewers) {
+  const betId = storage.activeBets.get(streamKey);
+  if (!betId) return;
+  const bet = storage.bets.get(betId);
+  if (!bet || bet.resolved) return;
+
+  bet.resolved    = true;
+  bet.finalViewers = finalViewers;
+  const won = finalViewers > bet.startViewers;
+  storage.bets.set(betId, bet);
+  storage.activeBets.delete(streamKey);
+
+  const guild = client.guilds.cache.get(config.discord.guildId);
+  const ch    = guild?.channels.cache.get(config.discord.generalChannelId || config.discord.liveChannelId);
+
+  if (won && bet.totalPool > 0) {
+    const winners = Object.entries(bet.participants);
+    winners.forEach(([uid, data]) => {
+      const share = Math.floor((data.amount / bet.totalPool) * bet.totalPool * 1.9);
+      addCoins(uid, share, `Ganaste apuesta — pool ${bet.totalPool}`);
+    });
+    if (ch) await ch.send({ embeds: [new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle('🎲 ¡Apuesta resuelta — GANARON!')
+      .setDescription(`El streamer subió de **${bet.startViewers}** a **${finalViewers}** viewers.\n✅ Los ${winners.length} participantes reciben su parte del pool de **${bet.totalPool} 🪙**!`)
+      .setTimestamp()] });
+  } else if (ch) {
+    await ch.send({ embeds: [new EmbedBuilder()
+      .setColor(0xFF4444)
+      .setTitle('🎲 Apuesta resuelta — perdieron')
+      .setDescription(`El streamer no subió viewers (${bet.startViewers} → ${finalViewers}). Pool de **${bet.totalPool} 🪙** perdido.`)
+      .setTimestamp()] });
+  }
+
+  saveStorage();
+}
+
+// Llama resolveBets() al detectar que un stream terminó.
+// En checkAndNotify(), dentro del bloque "Stream terminado", agrega:
+// await resolveBets(streamKey, liveData.currentViewers || 0);
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN C — TORNEOS / EVENTOS
+// ══════════════════════════════════════════════════════
+
+async function handleCrearTorneo(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const nombre    = interaction.options.getString('nombre');
+  const desc      = interaction.options.getString('descripcion') || '';
+  const duracion  = interaction.options.getInteger('duracion_horas') || 24;
+  const premio    = interaction.options.getInteger('premio_coins')   || 500;
+  const metrica   = interaction.options.getString('metrica')         || 'viewers';
+
+  const tourneyId = `torneo-${Date.now()}`;
+  const endsAt    = new Date(Date.now() + duracion * 3600000).toISOString();
+
+  storage.tournaments.set(tourneyId, {
+    id: tourneyId, nombre, desc, metrica, premio, endsAt,
+    createdBy: interaction.user.id,
+    participants: {},
+    status: 'active',
+    createdAt: new Date().toISOString(),
+  });
+  saveStorage();
+
+  const guild = client.guilds.cache.get(config.discord.guildId);
+  const ch    = guild?.channels.cache.get(config.discord.generalChannelId || config.discord.liveChannelId);
+
+  const metricaLabel = { viewers: '👥 Más viewers', streams: '📺 Más streams', clips: '🎬 Más clips virales' }[metrica] || metrica;
+
+  const embed = new EmbedBuilder()
+    .setColor(0xFF6B00)
+    .setTitle(`🏟️ ¡NUEVO TORNEO — ${nombre}!`)
+    .setDescription(desc || '¡El torneo ha comenzado! Que gane el mejor streamer.')
+    .addFields(
+      { name: '🎯 Métrica', value: metricaLabel, inline: true },
+      { name: '🪙 Premio', value: `${premio} coins`, inline: true },
+      { name: '⏰ Duración', value: `${duracion}h (termina <t:${Math.floor(new Date(endsAt).getTime()/1000)}:R>)`, inline: false },
+    )
+    .setFooter({ text: `ID: ${tourneyId} • Usa /unirse-torneo para participar` })
+    .setTimestamp();
+
+  if (ch) await ch.send({ content: '@everyone 🏟️ **¡Nuevo torneo en El Patio RP!**', embeds: [embed] });
+  return interaction.editReply({ content: `✅ Torneo **${nombre}** creado. ID: \`${tourneyId}\`` });
+}
+
+async function handleUnirseTorneo(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const userId = interaction.user.id;
+  if (!storage.streamers.has(userId))
+    return interaction.editReply({ content: '❌ Solo streamers registrados pueden participar en torneos.' });
+
+  const activos = [...storage.tournaments.values()].filter(t => t.status === 'active');
+  if (!activos.length) return interaction.editReply({ content: '❌ No hay torneos activos ahora mismo.' });
+
+  const torneo = activos[0]; // Unirse al torneo más reciente activo
+  if (torneo.participants[userId]) return interaction.editReply({ content: '✅ Ya estás inscrito en este torneo.' });
+
+  torneo.participants[userId] = { joinedAt: new Date().toISOString(), score: 0 };
+  storage.tournaments.set(torneo.id, torneo);
+  saveStorage();
+
+  return interaction.editReply({
+    embeds: [new EmbedBuilder()
+      .setColor(0xFF6B00)
+      .setTitle(`🏟️ ¡Inscrito en ${torneo.nombre}!`)
+      .setDescription(`Estás participando. La métrica es: **${torneo.metrica}**.\nPremio: **${torneo.premio} 🪙**.\nTermina: <t:${Math.floor(new Date(torneo.endsAt).getTime()/1000)}:R>`)
+      .setTimestamp()],
+  });
+}
+
+async function checkTournaments() {
+  const now = Date.now();
+  for (const [tid, t] of storage.tournaments.entries()) {
+    if (t.status !== 'active') continue;
+    if (new Date(t.endsAt).getTime() > now) continue;
+
+    // Torneo terminado — calcular ganador
+    t.status = 'finished';
+
+    // Actualizar scores desde weeklyStats
+    for (const uid of Object.keys(t.participants)) {
+      const ws = storage.weeklyStats.get(uid) || {};
+      t.participants[uid].score = t.metrica === 'viewers' ? (ws.peakViewers || 0)
+        : t.metrica === 'streams' ? (ws.streams || 0)
+        : (ws.clips || 0);
+    }
+
+    const sorted = Object.entries(t.participants).sort(([,a],[,b]) => b.score - a.score);
+    const winnerId = sorted[0]?.[0];
+    t.winnerId = winnerId;
+    storage.tournaments.set(tid, t);
+
+    if (winnerId) {
+      addCoins(winnerId, t.premio, `Ganador torneo: ${t.nombre}`);
+      const guild  = client.guilds.cache.get(config.discord.guildId);
+      const ch     = guild?.channels.cache.get(config.discord.generalChannelId || config.discord.liveChannelId);
+      const winner = await guild.members.fetch(winnerId).catch(() => null);
+      if (ch) await ch.send({
+        content: '@everyone 🏆 **¡Torneo finalizado!**',
+        embeds: [new EmbedBuilder()
+          .setColor(0xFFD700)
+          .setTitle(`🏆 Ganador del torneo: ${t.nombre}`)
+          .setDescription(`🥇 **${winner?.displayName || winnerId}** ganó **${t.premio} 🪙** con score **${sorted[0][1].score}**!`)
+          .addFields({ name: '📊 Top 3', value: sorted.slice(0,3).map(([uid,d],i)=>`${['🥇','🥈','🥉'][i]} ${uid} — ${d.score}`).join('\n') || '—' })
+          .setTimestamp()],
+      });
+    }
+    saveStorage();
+  }
+}
+// Agrega al setInterval loop: setInterval(checkTournaments, 60000);
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN D — POSTS DE REDES SOCIALES (detector)
+// ══════════════════════════════════════════════════════
+
+async function checkSocialPosts() {
+  for (const [userId, data] of storage.streamers.entries()) {
+    const plats = data.platforms || {};
+
+    // TikTok — verificar últimos videos
+    if (plats.tiktok) {
+      try {
+        const r = await axios.get(`https://www.tiktok.com/@${plats.tiktok}`, {
+          timeout: 12000,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept-Language': 'es-ES,es;q=0.9' },
+        });
+        const html = r.data || '';
+        // Extraer últimos videos del JSON embebido
+        const itemMatch = html.match(/"ItemList":\{"Feed":\{"list":\[([^\]]+)\]/);
+        if (itemMatch) {
+          const videoMatches = [...html.matchAll(/"id":"(\d+)","desc":"([^"]{0,100})"/g)];
+          for (const [, vid, desc] of videoMatches.slice(0, 3)) {
+            const postKey = `tiktok-${userId}-${vid}`;
+            if (storage.lastContentCheck.get(postKey)) continue;
+            storage.lastContentCheck.set(postKey, Date.now());
+
+            const postObj = {
+              id: postKey, platform: 'tiktok', userId,
+              streamer: data.displayName || userId,
+              content: desc, url: `https://tiktok.com/@${plats.tiktok}/video/${vid}`,
+              detectedAt: new Date().toISOString(),
+            };
+            if (!storage.posts) storage.posts = [];
+            storage.posts.unshift(postObj);
+            if (storage.posts.length > 100) storage.posts.pop();
+
+            await sendPostNotification(userId, postObj, data);
+          }
+        }
+      } catch { /* silencioso */ }
+    }
+    await new Promise(r => setTimeout(r, 2000)); // rate limit gentil
+  }
+}
+
+async function sendPostNotification(userId, post, streamerData) {
+  try {
+    const guild   = client.guilds.cache.get(config.discord.guildId);
+    const ch      = guild?.channels.cache.get(config.discord.postsChannelId || config.discord.notificationsChannelId);
+    if (!ch) return;
+    const member  = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return;
+
+    const pColor = post.platform === 'tiktok' ? 0xFF0050 : 0xE1306C;
+    const pEmoji = post.platform === 'tiktok' ? '⚫' : '📸';
+    const pName  = post.platform === 'tiktok' ? 'TikTok' : 'Instagram';
+
+    const embed = new EmbedBuilder()
+      .setColor(pColor)
+      .setAuthor({ name: `${pEmoji} Nueva publicación en ${pName}`, iconURL: member.user.displayAvatarURL() })
+      .setTitle(member.displayName)
+      .setURL(post.url)
+      .setDescription(post.content || '¡Nueva publicación!')
+      .setFooter({ text: `El Patio RP • ${pName}`, iconURL: client.user?.displayAvatarURL() })
+      .setTimestamp();
+
+    const btn = new ButtonBuilder().setLabel(`${pEmoji} Ver en ${pName}`).setStyle(ButtonStyle.Link).setURL(post.url);
+    const plats = streamerData?.platforms || {};
+    const components = [new ActionRowBuilder().addComponents(btn)];
+    if (plats.twitch) components[0].addComponents(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/${plats.twitch}`));
+
+    await ch.send({ content: `${pEmoji} **${member.displayName}** publicó algo nuevo en **${pName}**!`, embeds: [embed], components });
+    console.log(`📱 Post detectado: ${member.displayName} en ${pName}`);
+  } catch (e) { logError('sendPostNotification', e); }
+}
+// Agregar al bot: setInterval(checkSocialPosts, 15 * 60 * 1000); // cada 15 min
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN E — NUEVOS SLASH COMMANDS (agregar al array commands[])
+// ══════════════════════════════════════════════════════
+
+// Agrega estos al array commands[] antes del .map(cmd => cmd.toJSON()):
+const newCommands = [
+  new SlashCommandBuilder()
+    .setName('tienda')
+    .setDescription('Ver y comprar items con tus coins')
+    .addStringOption(o => o.setName('item')
+      .setDescription('Item a comprar')
+      .addChoices(
+        { name: '⭐ Rol VIP (500 🪙)',           value: 'vip_role' },
+        { name: '📣 Mención especial (200 🪙)',   value: 'mention' },
+        { name: '🎨 Banner en hilo (300 🪙)',     value: 'hilo_banner' },
+        { name: '🚀 Boost al Top 3 (150 🪙)',     value: 'top_boost' },
+        { name: '🎨 Color personalizado (100 🪙)', value: 'custom_color' },
+      )),
+
+  new SlashCommandBuilder()
+    .setName('apostar')
+    .setDescription('Apuesta coins a que un streamer en vivo sube de viewers')
+    .addUserOption(o => o.setName('streamer').setDescription('Streamer al que apostar').setRequired(true))
+    .addIntegerOption(o => o.setName('coins').setDescription('Cuántos coins apostar (mínimo 10)').setRequired(true).setMinValue(10)),
+
+  new SlashCommandBuilder()
+    .setName('mis-apuestas')
+    .setDescription('Ver el historial de tus apuestas y coins'),
+
+  new SlashCommandBuilder()
+    .setName('crear-torneo')
+    .setDescription('[Admin] Crear un torneo entre streamers')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addStringOption(o => o.setName('nombre').setDescription('Nombre del torneo').setRequired(true))
+    .addStringOption(o => o.setName('metrica').setDescription('¿Qué se mide?').setRequired(true)
+      .addChoices(
+        { name: '👥 Más peak viewers', value: 'viewers' },
+        { name: '📺 Más streams',      value: 'streams' },
+        { name: '🎬 Más clips virales', value: 'clips'  },
+      ))
+    .addIntegerOption(o => o.setName('duracion_horas').setDescription('Duración en horas (default: 24)').setMinValue(1).setMaxValue(168))
+    .addIntegerOption(o => o.setName('premio_coins').setDescription('Premio en coins (default: 500)').setMinValue(50))
+    .addStringOption(o => o.setName('descripcion').setDescription('Descripción del torneo')),
+
+  new SlashCommandBuilder()
+    .setName('unirse-torneo')
+    .setDescription('Unirte al torneo activo como competidor'),
+
+  new SlashCommandBuilder()
+    .setName('ver-torneo')
+    .setDescription('Ver el estado del torneo activo y el ranking'),
+
+  new SlashCommandBuilder()
+    .setName('mis-coins')
+    .setDescription('Ver tu saldo de coins y últimas transacciones'),
+];
+// → Luego en registerCommands(), cambia el array a: [...commands, ...newCommands]
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN F — HANDLERS (agregar dentro del interactionCreate)
+// ══════════════════════════════════════════════════════
+// Pega estos casos dentro del if (interaction.isChatInputCommand()) { ... }
+
+/*
+if (commandName === 'tienda')         return handleShop(interaction);
+if (commandName === 'apostar')        return handleApostar(interaction);
+if (commandName === 'crear-torneo')   return handleCrearTorneo(interaction);
+if (commandName === 'unirse-torneo')  return handleUnirseTorneo(interaction);
+
+if (commandName === 'mis-coins') {
+  await interaction.deferReply({ ephemeral: true });
+  const coins = getCoins(interaction.user.id);
+  const ec    = storage.economy.get(interaction.user.id) || { transactions: [] };
+  const last5 = (ec.transactions || []).slice(-5).reverse();
+  return interaction.editReply({ embeds: [new EmbedBuilder()
+    .setColor(0xFFD700)
+    .setTitle('🪙 Tus Coins — El Patio RP')
+    .setDescription(`💰 Saldo actual: **${coins} coins**`)
+    .addFields(last5.length ? [{ name: '📋 Últimas transacciones', value: last5.map(t=>`\`${t.amount>0?'+':''}${t.amount}\` ${t.reason}`).join('\n') }] : [])
+    .setFooter({ text: 'Ganas coins streamando y teniendo clips virales' }).setTimestamp()] });
+}
+
+if (commandName === 'mis-apuestas') {
+  await interaction.deferReply({ ephemeral: true });
+  const userId = interaction.user.id;
+  const myBets = [...storage.bets.values()].filter(b => b.participants[userId]);
+  if (!myBets.length) return interaction.editReply({ content: '❌ No tienes apuestas registradas aún.' });
+  const lines = myBets.map(b => {
+    const won   = b.resolved && b.finalViewers > b.startViewers;
+    const amt   = b.participants[userId]?.amount || 0;
+    const state = b.resolved ? (won ? '✅ Ganaste' : '❌ Perdiste') : '⏳ En curso';
+    return `${state} — **${amt} 🪙** en stream de \`${b.streamerId.slice(0,10)}\``;
+  }).slice(-10);
+  return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0xFF9900).setTitle('🎲 Tus apuestas').setDescription(lines.join('\n')).setTimestamp()] });
+}
+
+if (commandName === 'ver-torneo') {
+  await interaction.deferReply();
+  const activos = [...storage.tournaments.values()].filter(t => t.status === 'active');
+  if (!activos.length) return interaction.editReply({ content: '❌ No hay torneos activos.' });
+  const t = activos[0];
+  const sorted = Object.entries(t.participants).sort(([,a],[,b]) => b.score - a.score);
+  return interaction.editReply({ embeds: [new EmbedBuilder()
+    .setColor(0xFF6B00)
+    .setTitle(`🏟️ ${t.nombre}`)
+    .setDescription(t.desc || '')
+    .addFields(
+      { name: '🎯 Métrica', value: t.metrica, inline: true },
+      { name: '🪙 Premio', value: `${t.premio} coins`, inline: true },
+      { name: '⏰ Termina', value: `<t:${Math.floor(new Date(t.endsAt).getTime()/1000)}:R>`, inline: true },
+      { name: `📊 Ranking (${sorted.length} participantes)`, value: sorted.slice(0,5).map(([uid,d],i)=>`${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} \`${uid.slice(0,15)}\` — ${d.score}`).join('\n') || 'Sin participantes' },
+    ).setTimestamp()] });
+}
+*/
+
+// ══════════════════════════════════════════════════════
+// SECCIÓN G — NUEVOS ENDPOINTS EXPRESS (antes de webApp.listen)
+// ══════════════════════════════════════════════════════
+
+webApp.get('/api/posts', requireAdmin, (req, res) => {
+  const posts = storage.posts || [];
+  res.json(posts.slice(0, 50));
+});
+
+webApp.get('/api/tournaments', requireAdmin, (req, res) => {
+  const list = [...storage.tournaments.values()].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(list);
+});
+
+webApp.get('/api/bets', requireAdmin, (req, res) => {
+  const list = [...storage.bets.values()].sort((a,b) => new Date(b.startedAt||0) - new Date(a.startedAt||0));
+  res.json(list.slice(0, 50));
+});
+
+webApp.get('/api/pending-registrations', requireAdmin, (req, res) => {
+  const list = [...storage.pendingRegistrations.entries()].map(([uid, d]) => ({ uid, ...d }));
+  res.json(list);
+});
+
+webApp.post('/api/approve-registration/:uid', requireAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const pending = storage.pendingRegistrations.get(uid);
+    if (!pending) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    const guild  = client.guilds.cache.get(config.discord.guildId);
+    const member = await guild.members.fetch(uid).catch(() => null);
+    if (!member) return res.status(404).json({ error: 'Miembro no encontrado en el server' });
+    const thread = await createStreamerThread(member, pending.platforms, pending.bio, '#9146FF');
+    storage.pendingRegistrations.delete(uid);
+    saveStorage();
+    await member.send({ content: `🎉 ¡Tu solicitud fue aprobada desde el panel! Ya eres streamer de **El Patio RP**. Usa \`/mi-hilo\` para ver tu perfil.` }).catch(() => {});
+    res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.post('/api/reject-registration/:uid', requireAdmin, (req, res) => {
+  const { uid } = req.params;
+  storage.pendingRegistrations.delete(uid);
+  saveStorage();
+  res.json({ ok: true });
+});
+
+webApp.post('/api/config', requireAdmin, (req, res) => {
+  const { cooldownMinutes, checkInterval, viralThreshold, minViewers } = req.body;
+  if (cooldownMinutes)  config.notifications.cooldownMinutes = parseInt(cooldownMinutes);
+  if (checkInterval)    config.notifications.checkInterval   = parseInt(checkInterval) * 1000;
+  if (viralThreshold)   config.clips.viralThreshold          = parseInt(viralThreshold);
+  if (minViewers)       config.clips.minViewers              = parseInt(minViewers);
+  console.log(`⚙️ Config actualizada desde dashboard: cooldown=${config.notifications.cooldownMinutes}min`);
+  res.json({ ok: true, config: {
+    cooldownMinutes: config.notifications.cooldownMinutes,
+    checkIntervalSec: config.notifications.checkInterval / 1000,
+    viralThreshold: config.clips.viralThreshold,
+    minViewers: config.clips.minViewers,
+  }});
+});
+
+// ══════════════════════════════════════════════════════
+// VARIABLES .env NUEVAS
+// ══════════════════════════════════════════════════════
+/*
+SHOP_VIP_ROLE_ID=id_del_rol_vip_en_discord
+*/
