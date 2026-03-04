@@ -14,7 +14,9 @@ const axios   = require('axios');
 const fs      = require('fs');
 const path    = require('path');
 
+// ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURACIÓN
+// ═══════════════════════════════════════════════════════════════════════════════
 const config = {
   discord: {
     token:                  process.env.DISCORD_TOKEN,
@@ -55,12 +57,21 @@ const config = {
   shopVipRoleId: process.env.SHOP_VIP_ROLE_ID || '',
 };
 
-// PLATAFORMAS - URLs CORREGIDAS (sin espacios)
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPRESS SERVER SETUP (INICIO INMEDIATO)
+// ═══════════════════════════════════════════════════════════════════════════════
+const webApp = express();
+webApp.use(express.json());
+webApp.use(express.static(path.join(__dirname, 'public')));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLATAFORMAS Y DATOS
+// ═══════════════════════════════════════════════════════════════════════════════
 const PLATFORM_CONFIG = {
-  twitch:  { color:0x9146FF, emoji:'🟣', name:'Twitch',  icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png', watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  urlBase:'https://twitch.tv/', thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_${u}-1280x720.jpg?t=${Date.now()}` },
-  kick:    { color:0x53FC18, emoji:'🟢', name:'Kick',    icon:'https://kick.com/favicon.ico', watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    urlBase:'https://kick.com/', thumb:()=>null },
-  tiktok:  { color:0xFF0050, emoji:'⚫', name:'TikTok',  icon:'https://www.tiktok.com/favicon.ico', watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  urlBase:'https://www.tiktok.com/@', thumb:()=>null },
-  youtube: { color:0xFF0000, emoji:'🔴', name:'YouTube', icon:'https://www.youtube.com/favicon.ico', watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', urlBase:'https://youtube.com/@', thumb:()=>null },
+  twitch:  { color:0x9146FF, emoji:'🟣', name:'Twitch',  icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png ', watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  urlBase:'https://twitch.tv/ ', thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_ ${u}-1280x720.jpg?t=${Date.now()}` },
+  kick:    { color:0x53FC18, emoji:'🟢', name:'Kick',    icon:'https://kick.com/favicon.ico ', watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    urlBase:'https://kick.com/ ', thumb:()=>null },
+  tiktok:  { color:0xFF0050, emoji:'⚫', name:'TikTok',  icon:'https://www.tiktok.com/favicon.ico ', watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  urlBase:'https://www.tiktok.com/@ ', thumb:()=>null },
+  youtube: { color:0xFF0000, emoji:'🔴', name:'YouTube', icon:'https://www.youtube.com/favicon.ico ', watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', urlBase:'https://youtube.com/@ ', thumb:()=>null },
 };
 
 const SHOP_ITEMS = [
@@ -82,7 +93,9 @@ const REWARD_MILESTONES = [
   { id:'viral_clips_10', name:'🎬 10 Clips Virales',      coins:250, desc:'¡10 clips virales!',                        condition:(s)=>s.viralClips>=10 },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════════
 // STORAGE
+// ═══════════════════════════════════════════════════════════════════════════════
 const STORAGE_FILE = path.join(__dirname, 'storage.json');
 const storage = {
   streamers:            new Map(),
@@ -163,7 +176,9 @@ function loadStorage() {
   } catch(e) { console.error('❌ Error cargando storage:', e.message); }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
 // CLIENT
+// ═══════════════════════════════════════════════════════════════════════════════
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -201,13 +216,318 @@ const _origLog=console.log, _origErr=console.error;
 console.log = (...a)=>{ const m=a.join(' '); webLogs.push({type:'info',msg:m,time:new Date().toISOString()}); if(webLogs.length>500)webLogs.shift(); _origLog(...a); };
 console.error= (...a)=>{ const m=a.join(' '); webLogs.push({type:'error',msg:m,time:new Date().toISOString()}); if(webLogs.length>500)webLogs.shift(); _origErr(...a); };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIDDLEWARES Y RUTAS API
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Auth middlewares
+function requireAdmin(req, res, next) {
+  const key = (req.headers['x-admin-key'] || req.query.key || req.body?.key || '').trim();
+  if (key === config.adminKey) { req.role = 'admin'; req.userLevel = 3; return next(); }
+  if (key === config.staffKey) { req.role = 'staff'; req.userLevel = 2; return next(); }
+  return res.status(401).json({ error: 'No autorizado. Clave inválida.' });
+}
+function requireAdminOnly(req, res, next) {
+  const key = req.headers['x-admin-key']||req.query.key||req.body?.key;
+  if (key===config.adminKey) { req.role='admin'; req.userLevel=3; return next(); }
+  return res.status(403).json({error:'Solo el admin principal puede hacer esto.'});
+}
+
+// Ruta de prueba
+webApp.get('/test', (req, res) => {
+  res.json({ message: 'OK', adminKey: config.adminKey, timestamp: new Date().toISOString() });
+});
+
+// Login POST
+webApp.post('/api/login', (req, res) => {
+  const key = req.body?.key?.trim();
+  if (key === config.adminKey) return res.json({ success: true, role: 'admin' });
+  if (key === config.staffKey) return res.json({ success: true, role: 'staff' });
+  res.status(401).json({ success: false, error: 'Clave inválida' });
+});
+
+// Stats para dashboard
+webApp.get('/api/stats', requireAdmin, (req, res) => {
+  const totalCoins = [...storage.economy.values()].reduce((a, b) => a + (b.coins || 0), 0);
+  res.json({
+    streamers: storage.streamers.size,
+    liveNow: storage.liveStreams.size,
+    pending: storage.pendingRegistrations.size,
+    totalCoins,
+    clips: storage.clips?.size || 0,
+    bets: storage.bets?.size || 0,
+    uptime: process.uptime()
+  });
+});
+
+// Status público
+webApp.get('/api/status', (req, res) => {
+  res.json({
+    bot: client.user?.tag || 'Desconectado',
+    status: 'online', 
+    ping: client.ws.ping, 
+    uptime: Math.floor(process.uptime()),
+    memory: fmtMem(), 
+    version: '9.2',
+    stats: { streamers: storage.streamers.size, liveNow: storage.liveStreams.size },
+    config: { enableTwitch: config.notifications.enableTwitch, enableKick: config.notifications.enableKick, enableTikTok: config.notifications.enableTikTok },
+  });
+});
+
+webApp.get('/live', (req,res)=>{
+  const list=[];
+  for (const [key,data] of storage.liveStreams.entries()) {
+    const uid=key.substring(key.indexOf('-')+1);
+    const sd=storage.streamers.get(uid)||{};
+    list.push({...data, userId:uid, platforms:sd.platforms||{}, displayName:sd.displayName||uid});
+  }
+  res.json(list);
+});
+
+// Ruta para buscar miembros
+webApp.get('/admin/find-member', requireAdmin, async (req,res)=>{
+  const q=(req.query.q||'').toLowerCase().trim();
+  if (!q) return res.json([]);
+  
+  try {
+    const guild=client.guilds.cache.get(config.discord.guildId);
+    if (!guild) return res.status(500).json({error:'Bot no conectado al servidor'});
+    
+    let members;
+    try {
+      members = await guild.members.fetch({query: q, limit: 10});
+      if (members.size === 0) {
+        members = guild.members.cache.filter(m => 
+          (m.displayName?.toLowerCase().includes(q)) || 
+          (m.user?.username?.toLowerCase().includes(q)) ||
+          (m.id === q)
+        ).first(10);
+      }
+    } catch(e) {
+      members = guild.members.cache.filter(m => 
+        (m.displayName?.toLowerCase().includes(q)) || 
+        (m.user?.username?.toLowerCase().includes(q)) ||
+        (m.id === q)
+      ).first(10);
+    }
+    
+    const results=[];
+    for (const [id,m] of members.entries ? members.entries() : Object.entries(members)) {
+      if (results.length>=10) break;
+      results.push({ 
+        id: m.id, 
+        displayName: m.displayName || m.user?.username || 'Unknown', 
+        username: m.user?.username || 'unknown', 
+        avatar: m.user?.displayAvatarURL({size:64}) || '', 
+        isRegistered: storage.streamers.has(m.id), 
+        hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false 
+      });
+    }
+    res.json(results);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+// Rutas protegidas
+webApp.get('/api/clips', requireAdmin, (req,res)=>{
+  const all=[];
+  for (const [uid,clips] of storage.clips.entries()) clips.forEach(c=>all.push({...c,streamerId:uid}));
+  res.json(all.sort((a,b)=>new Date(b.processedAt||0)-new Date(a.processedAt||0)).slice(0,100));
+});
+
+webApp.get('/api/pending-registrations', requireAdmin, (req,res)=>{
+  res.json([...storage.pendingRegistrations.entries()].map(([uid,d])=>({uid,...d})));
+});
+
+webApp.post('/api/approve-registration/:uid', requireAdmin, async (req,res)=>{
+  try {
+    const { uid } = req.params;
+    const pending = storage.pendingRegistrations.get(uid);
+    if (!pending) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    const guild  = client.guilds.cache.get(config.discord.guildId);
+    const member = await guild.members.fetch(uid).catch(() => null);
+    if (!member) return res.status(404).json({ error: 'Miembro no encontrado en el server' });
+    const thread = await createStreamerThread(member, pending.platforms, pending.bio, '#9146FF');
+    storage.pendingRegistrations.delete(uid);
+    saveStorage();
+    res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.post('/api/reject-registration/:uid', requireAdmin, (req, res) => {
+  try {
+    const { uid } = req.params;
+    if (!storage.pendingRegistrations.has(uid)) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    storage.pendingRegistrations.delete(uid);
+    saveStorage();
+    res.json({ ok: true, message: 'Solicitud rechazada' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.get('/api/streamers', requireAdmin, (req, res) => {
+  const list = [];
+  for (const [uid, data] of storage.streamers.entries()) {
+    list.push({
+      uid,
+      ...data,
+      coins: getCoins(uid),
+      isLive: [...storage.liveStreams.keys()].some(k => k.includes(uid)),
+      weeklyStats: storage.weeklyStats.get(uid) || {},
+      economy: storage.economy.get(uid) || { coins: 0 }
+    });
+  }
+  res.json(list);
+});
+
+webApp.delete('/api/streamer/:uid', requireAdminOnly, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    if (!storage.streamers.has(uid)) return res.status(404).json({ error: 'Streamer no encontrado' });
+    
+    const threadId = storage.threads.get(uid);
+    if (threadId) {
+      try {
+        const guild = client.guilds.cache.get(config.discord.guildId);
+        const thread = await guild.channels.fetch(threadId).catch(() => null);
+        if (thread) await thread.delete('Eliminado por admin');
+      } catch (e) { console.error('Error eliminando hilo:', e); }
+    }
+    
+    try {
+      const guild = client.guilds.cache.get(config.discord.guildId);
+      const member = await guild.members.fetch(uid).catch(() => null);
+      if (member && config.discord.streamerRoleId) {
+        await member.roles.remove(config.discord.streamerRoleId);
+      }
+    } catch (e) { console.error('Error quitando rol:', e); }
+    
+    storage.streamers.delete(uid);
+    storage.threads.delete(uid);
+    storage.achievements.delete(uid);
+    saveStorage();
+    res.json({ ok: true, message: 'Streamer eliminado' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.post('/api/update-economy', requireAdmin, (req, res) => {
+  try {
+    const { uid, amount, reason } = req.body;
+    if (!uid || !amount) return res.status(400).json({ error: 'Faltan datos' });
+    const newBalance = addCoins(uid, parseInt(amount), reason || 'Ajuste manual por admin');
+    res.json({ ok: true, newBalance, uid });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.get('/api/economy/:uid', requireAdmin, (req, res) => {
+  const { uid } = req.params;
+  const data = storage.economy.get(uid) || { coins: 0, transactions: [] };
+  res.json(data);
+});
+
+webApp.get('/api/stats/weekly', requireAdmin, (req, res) => {
+  const stats = [];
+  for (const [uid, data] of storage.weeklyStats.entries()) {
+    const streamer = storage.streamers.get(uid);
+    stats.push({
+      uid,
+      displayName: streamer?.displayName || uid,
+      ...data
+    });
+  }
+  res.json(stats.sort((a, b) => (b.peakViewers || 0) - (a.peakViewers || 0)));
+});
+
+webApp.post('/api/tournament', requireAdminOnly, (req, res) => {
+  try {
+    const { name, metric, duration, prize, description } = req.body;
+    const id = Date.now().toString();
+    storage.tournaments.set(id, {
+      id,
+      name,
+      metric,
+      startTime: Date.now(),
+      endTime: Date.now() + (duration * 3600000),
+      prize,
+      description,
+      participants: [],
+      status: 'active'
+    });
+    saveStorage();
+    res.json({ ok: true, tournamentId: id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.get('/api/tournaments', requireAdmin, (req, res) => {
+  res.json([...storage.tournaments.values()]);
+});
+
+webApp.post('/api/broadcast', requireAdmin, async (req, res) => {
+  try {
+    const { message, channelType } = req.body;
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    
+    let channelId;
+    switch(channelType) {
+      case 'general': channelId = config.discord.generalChannelId; break;
+      case 'live': channelId = config.discord.liveChannelId; break;
+      case 'admin': channelId = config.discord.adminChannelId; break;
+      default: channelId = config.discord.notificationsChannelId;
+    }
+    
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel) return res.status(404).json({ error: 'Canal no encontrado' });
+    await channel.send({ content: message });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+webApp.get('/api/logs', requireAdmin, (req, res) => {
+  res.json(webLogs.slice(-100));
+});
+
+webApp.post('/api/config', requireAdminOnly, (req, res) => {
+  try {
+    const { checkInterval, cooldownMinutes } = req.body;
+    if (checkInterval) config.notifications.checkInterval = parseInt(checkInterval);
+    if (cooldownMinutes) config.notifications.cooldownMinutes = parseInt(cooldownMinutes);
+    res.json({ ok: true, config: config.notifications });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Health check
+webApp.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    discord: client.user ? 'connected' : 'disconnected',
+    wsPing: client.ws.ping
+  });
+});
+
+// RUTA CATCH-ALL - Para SPA
+webApp.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INICIAR SERVIDOR HTTP (INMEDIATAMENTE)
+// ═══════════════════════════════════════════════════════════════════════════════
+webApp.listen(config.port, '0.0.0.0', () => {
+  console.log(`🌐 Dashboard activo en puerto ${config.port}`);
+  console.log(`📁 Sirviendo archivos desde: ${path.join(__dirname, 'public')}`);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESTO DEL CÓDIGO DEL BOT (SIN CAMBIOS)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // TWITCH TOKEN
 let twitchToken=null, twitchTokenExpiry=0;
 async function getTwitchToken() {
   if (!config.twitch.clientId||config.twitch.clientId==='tu_twitch_client_id') return null;
   if (twitchToken && Date.now()<twitchTokenExpiry) return twitchToken;
   try {
-    const r = await axios.post('https://id.twitch.tv/oauth2/token',null,{
+    const r = await axios.post('https://id.twitch.tv/oauth2/token ',null,{
       params:{ client_id:config.twitch.clientId, client_secret:config.twitch.clientSecret, grant_type:'client_credentials' },
       timeout:10000,
     });
@@ -224,7 +544,6 @@ function extractUsername(platform, input) {
   const s = String(input).trim();
   if (!s) return null;
   
-  // Si ya es solo el username sin URL
   if (!s.includes('http') && !s.includes('/')) {
     return s.replace(/^@/, '').trim();
   }
@@ -242,7 +561,6 @@ function extractUsername(platform, input) {
     if (m?.[1]) return m[1].replace(/\/$/, '').replace(/^@/, '').trim();
   }
   
-  // Si no matchea URL, limpiar
   return s.replace(/^https?:\/\//i,'')
           .replace(/^www\./i,'')
           .replace(/^@/,'')
@@ -252,7 +570,7 @@ function extractUsername(platform, input) {
           .pop()?.trim() || s;
 }
 
-// VERIFICACIÓN DE PLATAFORMAS - URLs corregidas (sin espacios)
+// VERIFICACIÓN DE PLATAFORMAS
 async function verifyPlatformUser(platform, rawInput) {
   const username = extractUsername(platform, rawInput);
   if (!username||username.length<1) return { exists:false, error:'Usuario vacío o URL inválida' };
@@ -262,7 +580,7 @@ async function verifyPlatformUser(platform, rawInput) {
     if (platform === 'twitch') {
       const token = await getTwitchToken();
       if (!token) return { exists:false, error:'Sin credenciales Twitch' };
-      const r = await axios.get('https://api.twitch.tv/helix/users',{
+      const r = await axios.get('https://api.twitch.tv/helix/users ',{
         headers:{ 'Client-ID':config.twitch.clientId, 'Authorization':`Bearer ${token}` },
         params:{ login:clean }, timeout:8000,
       });
@@ -272,8 +590,7 @@ async function verifyPlatformUser(platform, rawInput) {
     }
 
     if (platform === 'kick') {
-      // URL corregida: sin espacio después de /
-      const r = await axios.get(`https://kick.com/api/v2/channels/${clean}`,{
+      const r = await axios.get(`https://kick.com/api/v2/channels/ ${clean}`,{
         timeout:8000, headers:{ 'User-Agent':'Mozilla/5.0','Accept':'application/json' },
       });
       const d = r.data?.data || r.data;
@@ -283,8 +600,7 @@ async function verifyPlatformUser(platform, rawInput) {
 
     if (platform === 'tiktok') {
       try {
-        // URL corregida: sin espacio después de @
-        const r = await axios.get(`https://www.tiktok.com/@${clean}`,{
+        const r = await axios.get(`https://www.tiktok.com/@ ${clean}`,{
           timeout:15000,
           headers:{ 
             'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -320,7 +636,7 @@ async function verifyPlatformUser(platform, rawInput) {
       const handle = clean.startsWith('@')?clean.slice(1):clean;
       if (config.youtube.apiKey && config.youtube.apiKey !== 'tu_youtube_api_key') {
         try {
-          const r = await axios.get('https://www.googleapis.com/youtube/v3/channels',{
+          const r = await axios.get('https://www.googleapis.com/youtube/v3/channels ',{
             params:{ part:'snippet,statistics', forHandle:handle, key:config.youtube.apiKey }, timeout:8000,
           });
           const ch = r.data?.items?.[0];
@@ -330,7 +646,7 @@ async function verifyPlatformUser(platform, rawInput) {
         } catch(e) { }
       }
       try {
-        const r = await axios.get(`https://www.youtube.com/@${handle}`,{timeout:10000,headers:{'User-Agent':'Mozilla/5.0'}});
+        const r = await axios.get(`https://www.youtube.com/@ ${handle}`,{timeout:10000,headers:{'User-Agent':'Mozilla/5.0'}});
         if (r.status===404) return { exists:false, error:`${username} no existe en YouTube` };
         return { exists:true, displayName:handle, resolvedUsername:handle, warning:'Verificación básica', method:'YouTube Scraping' };
       } catch(e) {
@@ -345,12 +661,12 @@ async function verifyPlatformUser(platform, rawInput) {
   }
 }
 
-// DETECTORES DE STREAM - URLs corregidas
+// DETECTORES DE STREAM
 async function checkTwitchStream(username, retries=0) {
   const token = await getTwitchToken();
   if (!token) return null;
   try {
-    const r = await axios.get('https://api.twitch.tv/helix/streams',{
+    const r = await axios.get('https://api.twitch.tv/helix/streams ',{
       headers:{ 'Client-ID':config.twitch.clientId, 'Authorization':`Bearer ${token}` },
       params:{ user_login:username.toLowerCase() }, timeout:10000,
     });
@@ -358,7 +674,7 @@ async function checkTwitchStream(username, retries=0) {
     const s = r.data.data[0];
     return { isLive:true, title:s.title||'Sin título', game:s.game_name||'Sin categoría', viewers:s.viewer_count||0,
       thumbnailUrl:s.thumbnail_url?.replace('{width}','1280').replace('{height}','720')+`?t=${Date.now()}`,
-      startedAt:new Date(s.started_at), streamUrl:`https://twitch.tv/${username}`, platform:'twitch' };
+      startedAt:new Date(s.started_at), streamUrl:`https://twitch.tv/ ${username}`, platform:'twitch' };
   } catch(e) {
     if (retries<config.notifications.retryAttempts) { await new Promise(r=>setTimeout(r,config.notifications.retryDelay)); return checkTwitchStream(username,retries+1); }
     return null;
@@ -367,14 +683,14 @@ async function checkTwitchStream(username, retries=0) {
 
 async function checkKickStream(username, retries=0) {
   try {
-    const r = await axios.get(`https://kick.com/api/v2/channels/${username}/livestream`,{
+    const r = await axios.get(`https://kick.com/api/v2/channels/ ${username}/livestream`,{
       timeout:10000, headers:{ 'User-Agent':'Mozilla/5.0','Accept':'application/json' },
     });
     if (!r.data?.data?.id && !r.data?.id) return null;
     const d = r.data.data||r.data;
     return { isLive:true, title:d.session_title||d.title||'Sin título', game:d.categories?.[0]?.name||'Sin categoría',
       viewers:d.viewer_count||d.viewers_count||0, thumbnailUrl:d.thumbnail?.url||null,
-      startedAt:new Date(d.created_at||Date.now()), streamUrl:`https://kick.com/${username}`, platform:'kick' };
+      startedAt:new Date(d.created_at||Date.now()), streamUrl:`https://kick.com/ ${username}`, platform:'kick' };
   } catch(e) {
     if (retries<config.notifications.retryAttempts) { await new Promise(r=>setTimeout(r,config.notifications.retryDelay)); return checkKickStream(username,retries+1); }
     return null;
@@ -384,9 +700,9 @@ async function checkKickStream(username, retries=0) {
 async function checkTikTokLive(username) {
   const clean = username.replace('@','').trim();
   try {
-    const r = await axios.get(`https://www.tiktok.com/@${clean}/live`,{
+    const r = await axios.get(`https://www.tiktok.com/@ ${clean}/live`,{
       timeout:15000,
-      headers:{ 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36','Accept':'text/html','Referer':'https://www.tiktok.com/' },
+      headers:{ 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36','Accept':'text/html','Referer':'https://www.tiktok.com/ ' },
     });
     const html = r.data||'';
     const isLive = ['"isLiving":true','"liveStatus":1','"status":2','"roomStatus":2','"living":true'].some(s=>html.includes(s));
@@ -395,7 +711,7 @@ async function checkTikTokLive(username) {
     const tM = html.match(/"title":"([^"]{5,100})"/) || html.match(/"live_title":"([^"]{5,100})"/);
     return { isLive:true, title:tM?tM[1].replace(/\\u0026/g,'&'):`${clean} está en vivo en TikTok!`,
       game:'TikTok Live', viewers:vM?parseInt(vM[1]):0, thumbnailUrl:null,
-      startedAt:new Date(), streamUrl:`https://www.tiktok.com/@${clean}/live`, platform:'tiktok' };
+      startedAt:new Date(), streamUrl:`https://www.tiktok.com/@ ${clean}/live`, platform:'tiktok' };
   } catch { return null; }
 }
 
@@ -403,19 +719,19 @@ async function checkYouTubeLive(channelHandle) {
   if (!config.youtube.apiKey||config.youtube.apiKey==='tu_youtube_api_key') return null;
   try {
     const h = channelHandle.replace('@','').trim();
-    const sr = await axios.get('https://www.googleapis.com/youtube/v3/search',{
+    const sr = await axios.get('https://www.googleapis.com/youtube/v3/search ',{
       params:{ part:'snippet', q:h, type:'channel', key:config.youtube.apiKey, maxResults:1 }, timeout:10000,
     });
     if (!sr.data.items?.length) return null;
     const cid = sr.data.items[0].id.channelId;
-    const lr  = await axios.get('https://www.googleapis.com/youtube/v3/search',{
+    const lr  = await axios.get('https://www.googleapis.com/youtube/v3/search ',{
       params:{ part:'snippet', channelId:cid, eventType:'live', type:'video', key:config.youtube.apiKey, maxResults:1 }, timeout:10000,
     });
     if (!lr.data.items?.length) return null;
     const live = lr.data.items[0];
     return { isLive:true, title:live.snippet.title, game:'YouTube Live', viewers:0,
       thumbnailUrl:live.snippet.thumbnails?.high?.url||null,
-      startedAt:new Date(live.snippet.publishedAt), streamUrl:`https://youtube.com/watch?v=${live.id.videoId}`, platform:'youtube' };
+      startedAt:new Date(live.snippet.publishedAt), streamUrl:`https://youtube.com/watch?v= ${live.id.videoId}`, platform:'youtube' };
   } catch { return null; }
 }
 
@@ -433,7 +749,7 @@ async function getStreamData(platform, username) {
 async function askGroqAI(userPrompt, systemPrompt='Eres el asistente de El Patio RP. Responde en español.') {
   if (!config.groq.apiKey||config.groq.apiKey==='gsk_tu_groq_api_key') return null;
   try {
-    const r = await axios.post('https://api.groq.com/openai/v1/chat/completions',
+    const r = await axios.post('https://api.groq.com/openai/v1/chat/completions ',
       { model:config.groq.model, max_tokens:500, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}] },
       { headers:{ Authorization:`Bearer ${config.groq.apiKey}`,'Content-Type':'application/json' }, timeout:15000 }
     );
@@ -522,10 +838,10 @@ async function sendLiveNotification(platform, member, username, streamData, stre
 
     const mainBtn   = new ButtonBuilder().setLabel(`${p.emoji} ${p.watchLabel}`).setStyle(ButtonStyle.Link).setURL(streamUrl);
     const extraBtns = [];
-    if (platform!=='twitch'  && plats.twitch)    extraBtns.push(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/${plats.twitch}`));
-    if (platform!=='kick'    && plats.kick)      extraBtns.push(new ButtonBuilder().setLabel('🟢 Kick').setStyle(ButtonStyle.Link).setURL(`https://kick.com/${plats.kick}`));
-    if (platform!=='tiktok'  && plats.tiktok)    extraBtns.push(new ButtonBuilder().setLabel('⚫ TikTok').setStyle(ButtonStyle.Link).setURL(`https://www.tiktok.com/@${plats.tiktok}`));
-    if (platform!=='youtube' && plats.youtube)   extraBtns.push(new ButtonBuilder().setLabel('🔴 YouTube').setStyle(ButtonStyle.Link).setURL(`https://youtube.com/@${plats.youtube}`));
+    if (platform!=='twitch'  && plats.twitch)    extraBtns.push(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/ ${plats.twitch}`));
+    if (platform!=='kick'    && plats.kick)      extraBtns.push(new ButtonBuilder().setLabel('🟢 Kick').setStyle(ButtonStyle.Link).setURL(`https://kick.com/ ${plats.kick}`));
+    if (platform!=='tiktok'  && plats.tiktok)    extraBtns.push(new ButtonBuilder().setLabel('⚫ TikTok').setStyle(ButtonStyle.Link).setURL(`https://www.tiktok.com/@ ${plats.tiktok}`));
+    if (platform!=='youtube' && plats.youtube)   extraBtns.push(new ButtonBuilder().setLabel('🔴 YouTube').setStyle(ButtonStyle.Link).setURL(`https://youtube.com/@ ${plats.youtube}`));
 
     const components=[new ActionRowBuilder().addComponents(mainBtn)];
     if (extraBtns.length) components.push(new ActionRowBuilder().addComponents(...extraBtns.slice(0,4)));
@@ -591,11 +907,11 @@ async function createStreamerThread(member, platforms, bio, color) {
     .setDescription(bio||'*Streamer de El Patio RP*');
 
   let platText='';
-  if (platforms?.twitch)    platText+=`🟣 **Twitch:** [${platforms.twitch}](https://twitch.tv/${platforms.twitch})\n`;
-  if (platforms?.kick)      platText+=`🟢 **Kick:** [${platforms.kick}](https://kick.com/${platforms.kick})\n`;
-  if (platforms?.tiktok)    platText+=`⚫ **TikTok:** [@${platforms.tiktok}](https://tiktok.com/@${platforms.tiktok})\n`;
-  if (platforms?.youtube)   platText+=`🔴 **YouTube:** [${platforms.youtube}](https://youtube.com/@${platforms.youtube})\n`;
-  if (platforms?.instagram) platText+=`📸 **Instagram:** [@${platforms.instagram}](https://instagram.com/${platforms.instagram})\n`;
+  if (platforms?.twitch)    platText+=`🟣 **Twitch:** [${platforms.twitch}](https://twitch.tv/ ${platforms.twitch})\n`;
+  if (platforms?.kick)      platText+=`🟢 **Kick:** [${platforms.kick}](https://kick.com/ ${platforms.kick})\n`;
+  if (platforms?.tiktok)    platText+=`⚫ **TikTok:** [@${platforms.tiktok}](https://tiktok.com/@ ${platforms.tiktok})\n`;
+  if (platforms?.youtube)   platText+=`🔴 **YouTube:** [${platforms.youtube}](https://youtube.com/@ ${platforms.youtube})\n`;
+  if (platforms?.instagram) platText+=`📸 **Instagram:** [@${platforms.instagram}](https://instagram.com/ ${platforms.instagram})\n`;
   if (platText) embed.addFields({name:'📺 Plataformas',value:platText});
   embed.addFields(
     {name:'👤 Miembro desde',value:`<t:${Math.floor((member.joinedTimestamp||Date.now())/1000)}:R>`,inline:true},
@@ -616,7 +932,6 @@ async function createStreamerThread(member, platforms, bio, color) {
     stats:{ totalStreams:0, totalHours:0, avgViewers:0, peakViewers:0, viralClips:0, lastStream:null },
   });
 
-  // ASIGNAR ROL DE STREAMER AUTOMÁTICAMENTE
   if (config.discord.streamerRoleId) {
     try {
       await member.roles.add(config.discord.streamerRoleId);
@@ -944,345 +1259,9 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// RUTA DE PRUEBA - Sin autenticación
-webApp.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Servidor funcionando', 
-    admin_key_configurada: config.adminKey,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// RUTA LOGIN SIMPLE
-webApp.post('/api/login', (req, res) => {
-  const key = req.body?.key?.trim();
-  console.log('Intento login con key:', key);
-  
-  if (key === config.adminKey) {
-    return res.json({ success: true, role: 'admin' });
-  }
-  if (key === config.staffKey) {
-    return res.json({ success: true, role: 'staff' });
-  }
-  
-  res.status(401).json({ success: false, error: 'Clave inválida' });
-});
-
-// Middleware de autenticación
-function requireAdmin(req, res, next) {
-  const key = (req.headers['x-admin-key'] || req.query.key || req.body?.key || '').trim();
-  
-  // Debug: Ver qué está llegando (aparecerá en los logs de Railway)
-  console.log('🔑 Intento de login - Key recibida:', key);
-  console.log('🔑 Key esperada (admin):', config.adminKey);
-  console.log('🔑 Key esperada (staff):', config.staffKey);
-  
-  if (key === config.adminKey) { 
-    req.role = 'admin'; 
-    req.userLevel = 3; 
-    console.log('✅ Login como ADMIN');
-    return next(); 
-  }
-  
-  if (key === config.staffKey) { 
-    req.role = 'staff'; 
-    req.userLevel = 2; 
-    console.log('✅ Login como STAFF');
-    return next(); 
-  }
-  
-  console.log('❌ Clave incorrecta');
-  return res.status(401).json({ error: 'No autorizado. Clave inválida.' });
-}
-
-function requireAdminOnly(req, res, next) {
-  const key = req.headers['x-admin-key']||req.query.key||req.body?.key;
-  if (key===config.adminKey) { req.role='admin'; req.userLevel=3; return next(); }
-  return res.status(403).json({error:'Solo el admin principal puede hacer esto.'});
-}
-
-// RUTA PARA BUSCAR MIEMBROS - ESTA FALTABA EN TU CÓDIGO
-webApp.get('/admin/find-member', requireAdmin, async (req,res)=>{
-  const q=(req.query.q||'').toLowerCase().trim();
-  if (!q) return res.json([]);
-  
-  try {
-    const guild=client.guilds.cache.get(config.discord.guildId);
-    if (!guild) {
-      console.error('Guild no encontrado:', config.discord.guildId);
-      return res.status(500).json({error:'Bot no conectado al servidor'});
-    }
-    
-    // Intentar fetch desde la API si no está en caché
-    let members;
-    try {
-      members = await guild.members.fetch({query: q, limit: 10});
-      // Si no encuentra con query, buscar en caché
-      if (members.size === 0) {
-        members = guild.members.cache.filter(m => 
-          (m.displayName?.toLowerCase().includes(q)) || 
-          (m.user?.username?.toLowerCase().includes(q)) ||
-          (m.id === q)
-        ).first(10);
-      }
-    } catch(e) {
-      // Fallback a caché
-      members = guild.members.cache.filter(m => 
-        (m.displayName?.toLowerCase().includes(q)) || 
-        (m.user?.username?.toLowerCase().includes(q)) ||
-        (m.id === q)
-      ).first(10);
-    }
-    
-    const results=[];
-    for (const [id,m] of members.entries ? members.entries() : Object.entries(members)) {
-      if (results.length>=10) break;
-      results.push({ 
-        id: m.id, 
-        displayName: m.displayName || m.user?.username || 'Unknown', 
-        username: m.user?.username || 'unknown', 
-        avatar: m.user?.displayAvatarURL({size:64}) || '', 
-        isRegistered: storage.streamers.has(m.id), 
-        hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false 
-      });
-    }
-    
-    res.json(results);
-  } catch(e) { 
-    console.error('Error en find-member:', e);
-    res.status(500).json({error:e.message}); 
-  }
-});
-
-// RUTAS PÚBLICAS
-webApp.get('/api/status', (req,res)=>{
-  const streamersList=[];
-  for (const [uid,d] of storage.streamers.entries()) {
-    streamersList.push({
-      id:uid, displayName:d.displayName||uid, platforms:d.platforms||{}, 
-      stats:d.stats||{}, coins:getCoins(uid), isLive:[...storage.liveStreams.keys()].some(k=>k.includes(uid)),
-    });
-  }
-  res.json({
-    bot:client.user?.tag||'Desconectado',
-    status:'online', ping:client.ws.ping, uptime:Math.floor(process.uptime()),
-    memory:fmtMem(), version:'9.2',
-    stats:{ streamers:storage.streamers.size, liveNow:storage.liveStreams.size },
-    config:{ enableTwitch:config.notifications.enableTwitch, enableKick:config.notifications.enableKick, enableTikTok:config.notifications.enableTikTok },
-    streamers:streamersList,
-  });
-});
-
-webApp.get('/live', (req,res)=>{
-  const list=[];
-  for (const [key,data] of storage.liveStreams.entries()) {
-    const uid=key.substring(key.indexOf('-')+1);
-    const sd=storage.streamers.get(uid)||{};
-    list.push({...data, userId:uid, platforms:sd.platforms||{}, displayName:sd.displayName||uid});
-  }
-  res.json(list);
-});
-
-// RUTAS PROTEGIDAS
-webApp.get('/api/clips', requireAdmin, (req,res)=>{
-  const all=[];
-  for (const [uid,clips] of storage.clips.entries()) clips.forEach(c=>all.push({...c,streamerId:uid}));
-  res.json(all.sort((a,b)=>new Date(b.processedAt||0)-new Date(a.processedAt||0)).slice(0,100));
-});
-
-webApp.get('/api/pending-registrations', requireAdmin, (req,res)=>{
-  res.json([...storage.pendingRegistrations.entries()].map(([uid,d])=>({uid,...d})));
-});
-
-webApp.post('/api/approve-registration/:uid', requireAdmin, async (req, res) => {
-  try {
-    const { uid } = req.params;
-    const pending = storage.pendingRegistrations.get(uid);
-    if (!pending) return res.status(404).json({ error: 'Solicitud no encontrada' });
-    
-    const guild = client.guilds.cache.get(config.discord.guildId);
-    const member = await guild.members.fetch(uid).catch(() => null);
-    if (!member) return res.status(404).json({ error: 'Miembro no encontrado en el server' });
-    
-    const thread = await createStreamerThread(member, pending.platforms, pending.bio, '#9146FF');
-    storage.pendingRegistrations.delete(uid);
-    saveStorage();
-    
-    res.json({ ok: true, threadId: thread.id, displayName: member.displayName });
-  } catch (e) { 
-    res.status(500).json({ error: e.message }); 
-  }
-});
-
-webApp.post('/api/reject-registration/:uid', requireAdmin, (req, res) => {
-  try {
-    const { uid } = req.params;
-    if (!storage.pendingRegistrations.has(uid)) {
-      return res.status(404).json({ error: 'Solicitud no encontrada' });
-    }
-    storage.pendingRegistrations.delete(uid);
-    saveStorage();
-    res.json({ ok: true, message: 'Solicitud rechazada' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-webApp.get('/api/streamers', requireAdmin, (req, res) => {
-  const list = [];
-  for (const [uid, data] of storage.streamers.entries()) {
-    list.push({
-      uid,
-      ...data,
-      coins: getCoins(uid),
-      isLive: [...storage.liveStreams.keys()].some(k => k.includes(uid)),
-      weeklyStats: storage.weeklyStats.get(uid) || {},
-      economy: storage.economy.get(uid) || { coins: 0 }
-    });
-  }
-  res.json(list);
-});
-
-webApp.delete('/api/streamer/:uid', requireAdminOnly, async (req, res) => {
-  try {
-    const { uid } = req.params;
-    if (!storage.streamers.has(uid)) {
-      return res.status(404).json({ error: 'Streamer no encontrado' });
-    }
-    
-    // Eliminar hilo
-    const threadId = storage.threads.get(uid);
-    if (threadId) {
-      try {
-        const guild = client.guilds.cache.get(config.discord.guildId);
-        const thread = await guild.channels.fetch(threadId).catch(() => null);
-        if (thread) await thread.delete('Eliminado por admin');
-      } catch (e) { console.error('Error eliminando hilo:', e); }
-    }
-    
-    // Quitar rol
-    try {
-      const guild = client.guilds.cache.get(config.discord.guildId);
-      const member = await guild.members.fetch(uid).catch(() => null);
-      if (member && config.discord.streamerRoleId) {
-        await member.roles.remove(config.discord.streamerRoleId);
-      }
-    } catch (e) { console.error('Error quitando rol:', e); }
-    
-    storage.streamers.delete(uid);
-    storage.threads.delete(uid);
-    storage.achievements.delete(uid);
-    saveStorage();
-    
-    res.json({ ok: true, message: 'Streamer eliminado' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-webApp.post('/api/update-economy', requireAdmin, (req, res) => {
-  try {
-    const { uid, amount, reason } = req.body;
-    if (!uid || !amount) return res.status(400).json({ error: 'Faltan datos' });
-    
-    const newBalance = addCoins(uid, parseInt(amount), reason || 'Ajuste manual por admin');
-    res.json({ ok: true, newBalance, uid });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-webApp.get('/api/economy/:uid', requireAdmin, (req, res) => {
-  const { uid } = req.params;
-  const data = storage.economy.get(uid) || { coins: 0, transactions: [] };
-  res.json(data);
-});
-
-webApp.get('/api/stats/weekly', requireAdmin, (req, res) => {
-  const stats = [];
-  for (const [uid, data] of storage.weeklyStats.entries()) {
-    const streamer = storage.streamers.get(uid);
-    stats.push({
-      uid,
-      displayName: streamer?.displayName || uid,
-      ...data
-    });
-  }
-  res.json(stats.sort((a, b) => (b.peakViewers || 0) - (a.peakViewers || 0)));
-});
-
-webApp.post('/api/tournament', requireAdminOnly, (req, res) => {
-  try {
-    const { name, metric, duration, prize, description } = req.body;
-    const id = Date.now().toString();
-    
-    storage.tournaments.set(id, {
-      id,
-      name,
-      metric,
-      startTime: Date.now(),
-      endTime: Date.now() + (duration * 3600000),
-      prize,
-      description,
-      participants: [],
-      status: 'active'
-    });
-    
-    saveStorage();
-    res.json({ ok: true, tournamentId: id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-webApp.get('/api/tournaments', requireAdmin, (req, res) => {
-  res.json([...storage.tournaments.values()]);
-});
-
-webApp.post('/api/broadcast', requireAdmin, async (req, res) => {
-  try {
-    const { message, channelType } = req.body;
-    const guild = client.guilds.cache.get(config.discord.guildId);
-    
-    let channelId;
-    switch(channelType) {
-      case 'general': channelId = config.discord.generalChannelId; break;
-      case 'live': channelId = config.discord.liveChannelId; break;
-      case 'admin': channelId = config.discord.adminChannelId; break;
-      default: channelId = config.discord.notificationsChannelId;
-    }
-    
-    const channel = guild.channels.cache.get(channelId);
-    if (!channel) return res.status(404).json({ error: 'Canal no encontrado' });
-    
-    await channel.send({ content: message });
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-webApp.get('/api/logs', requireAdmin, (req, res) => {
-  res.json(webLogs.slice(-100));
-});
-
-webApp.post('/api/config', requireAdminOnly, (req, res) => {
-  try {
-    const { checkInterval, cooldownMinutes } = req.body;
-    if (checkInterval) config.notifications.checkInterval = parseInt(checkInterval);
-    if (cooldownMinutes) config.notifications.cooldownMinutes = parseInt(cooldownMinutes);
-    res.json({ ok: true, config: config.notifications });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Health check
-webApp.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    discord: client.user ? 'connected' : 'disconnected',
-    wsPing: client.ws.ping
-  });
-});
-
-// STARTUP - Servidor Web PRIMERO (para Railway)
-webApp.listen(config.port, '0.0.0.0', () => {
-  console.log(`🌐 Dashboard activo en puerto ${config.port}`);
-  console.log(`📁 Sirviendo archivos desde: ${path.join(__dirname, 'public')}`);
-});
-
-// Luego el Bot de Discord
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOT EVENTS Y LOGIN (DESPUÉS DEL SERVIDOR)
+// ═══════════════════════════════════════════════════════════════════════════════
 client.once('clientReady', async () => {
   console.log(`🤖 ${client.user.tag} listo!`);
   console.log(`📊 Versión: 9.2 Ultra Notifier`);
@@ -1299,14 +1278,14 @@ client.on('warn', (w) => console.warn('⚠️ Discord:', w));
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n👋 Cerrando...');
+  console.log('\n👋 Cerrando bot...');
   saveStorage();
   client.destroy();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n👋 Cerrando...');
+  console.log('\n👋 Cerrando por SIGTERM...');
   saveStorage();
   client.destroy();
   process.exit(0);
