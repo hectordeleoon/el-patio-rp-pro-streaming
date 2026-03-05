@@ -46,11 +46,8 @@ const config = {
     enableYouTube: process.env.ENABLE_YOUTUBE === 'true',
   },
   filters: {
-    // Palabras clave que deben aparecer en el título o juego para considerarse relacionado con El Patio RP
     keywords: ['patio', 'elpatio', 'el patio', 'patiorp', 'patio rp', 'servidor patio'],
-    // Juegos permitidos (case insensitive)
     allowedGames: ['gta', 'grand theft auto', 'gta v', 'gta rp', 'fivem', 'red dead redemption', 'rdr2', 'roleplay', 'rp'],
-    // Si está en true, solo notifica si cumple el filtro. Si es false, notifica todo.
     strictMode: true
   },
   clips: {
@@ -73,13 +70,37 @@ webApp.use(express.json());
 webApp.use(express.static(path.join(__dirname, 'public')));
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PLATAFORMAS Y DATOS
+// PLATAFORMAS Y DATOS (CORREGIDO - SIN ESPACIOS EN URLS)
 // ═══════════════════════════════════════════════════════════════════════════════
 const PLATFORM_CONFIG = {
-  twitch:  { color:0x9146FF, emoji:'🟣', name:'Twitch',  icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png', watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  urlBase:'https://twitch.tv/', thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_${u}-1280x720.jpg?t=${Date.now()}` },
-  kick:    { color:0x53FC18, emoji:'🟢', name:'Kick',    icon:'https://kick.com/favicon.ico', watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    urlBase:'https://kick.com/', thumb:()=>null },
-  tiktok:  { color:0xFF0050, emoji:'⚫', name:'TikTok',  icon:'https://www.tiktok.com/favicon.ico', watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  urlBase:'https://www.tiktok.com/@', thumb:()=>null },
-  youtube: { color:0xFF0000, emoji:'🔴', name:'YouTube', icon:'https://www.youtube.com/favicon.ico', watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', urlBase:'https://youtube.com/@', thumb:()=>null },
+  twitch:  { 
+    color:0x9146FF, emoji:'🟣', name:'Twitch',  
+    icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png', 
+    watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  
+    urlBase:'https://twitch.tv/', 
+    thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_${u}-1280x720.jpg?t=${Date.now()}` 
+  },
+  kick:    { 
+    color:0x53FC18, emoji:'🟢', name:'Kick',    
+    icon:'https://kick.com/favicon.ico',  
+    watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    
+    urlBase:'https://kick.com/',  
+    thumb:()=>null 
+  },
+  tiktok:  { 
+    color:0xFF0050, emoji:'⚫', name:'TikTok',  
+    icon:'https://www.tiktok.com/favicon.ico',  
+    watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  
+    urlBase:'https://www.tiktok.com/@',  
+    thumb:()=>null 
+  },
+  youtube: { 
+    color:0xFF0000, emoji:'🔴', name:'YouTube', 
+    icon:'https://www.youtube.com/favicon.ico',  
+    watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', 
+    urlBase:'https://youtube.com/@',  
+    thumb:()=>null 
+  },
 };
 
 const SHOP_ITEMS = [
@@ -287,6 +308,9 @@ webApp.get('/live', (req,res)=>{
   res.json(list);
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENDPOINT DE BÚSQUEDA CORREGIDO Y OPTIMIZADO
+// ═══════════════════════════════════════════════════════════════════════════════
 webApp.get('/admin/find-member', requireAdmin, async (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
   if (!q || q.length < 2) return res.status(400).json({ error: 'Mínimo 2 caracteres' });
@@ -298,77 +322,72 @@ webApp.get('/admin/find-member', requireAdmin, async (req, res) => {
       return res.status(500).json({ error: 'Bot no conectado al servidor' });
     }
 
-    console.log(`🔍 Buscando miembros con query: "${q}" en guild: ${guild.name}`);
-    
+    console.log(`🔍 Buscando: "${q}" en ${guild.name}`);
     let results = [];
     
-    // MÉTODO 1: Buscar en caché local primero (más rápido)
-    const cachedMembers = guild.members.cache.filter(m => {
-      if (m.user.bot) return false;
-      const displayName = (m.displayName || '').toLowerCase();
-      const username = (m.user.username || '').toLowerCase();
-      const globalName = (m.user.globalName || '').toLowerCase();
-      const id = m.id;
-      
-      return displayName.includes(q) || 
-             username.includes(q) || 
-             globalName.includes(q) ||
-             id === q;
-    }).first(20);
-    
-    results = cachedMembers.map(m => ({
-      id: m.id,
-      displayName: m.displayName || m.user.username || 'Unknown',
-      username: m.user.username || 'unknown',
-      avatar: m.user.displayAvatarURL({ size: 64 }) || '',
-      isRegistered: storage.streamers.has(m.id),
-      hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false
-    }));
-
-    // MÉTODO 2: Si no hay resultados en caché y es un ID exacto, intentar fetch individual
-    if (results.length === 0 && /^\d{17,20}$/.test(q)) {
+    // MÉTODO 1: Si es un ID exacto de Discord (17-20 dígitos)
+    if (/^\d{17,20}$/.test(q)) {
       try {
-        console.log(`🔍 Intentando fetch por ID: ${q}`);
         const member = await guild.members.fetch(q).catch(() => null);
         if (member && !member.user.bot) {
-          results.push({
+          return res.json([{
             id: member.id,
             displayName: member.displayName || member.user.username,
             username: member.user.username,
             avatar: member.user.displayAvatarURL({ size: 64 }),
             isRegistered: storage.streamers.has(member.id),
-            hasStreamerRole: config.discord.streamerRoleId ? member.roles?.cache.has(config.discord.streamerRoleId) : false
-          });
+            hasStreamerRole: config.discord.streamerRoleId ? member.roles.cache.has(config.discord.streamerRoleId) : false
+          }]);
         }
       } catch (e) {
-        console.log('❌ No se pudo fetchear por ID:', e.message);
+        console.log('❌ No se encontró por ID:', e.message);
       }
     }
 
-    // MÉTODO 3: Si aún no hay resultados, intentar búsqueda API de Discord (solo funciona en servidores <1000 miembros o con privilegios)
-    if (results.length === 0) {
+    // MÉTODO 2: Buscar en caché local (más rápido)
+    const cachedMembers = guild.members.cache.filter(m => {
+      if (m.user.bot) return false;
+      const displayName = (m.displayName || '').toLowerCase();
+      const username = (m.user.username || '').toLowerCase();
+      const globalName = (m.user.globalName || '').toLowerCase();
+      
+      return displayName.includes(q) || 
+             username.includes(q) || 
+             globalName.includes(q);
+    }).first(25);
+
+    results = cachedMembers.map(m => ({
+      id: m.id,
+      displayName: m.displayName || m.user.username || 'Unknown',
+      username: m.user.username || 'unknown',
+      avatar: m.user.displayAvatarURL({ size: 64 }),
+      isRegistered: storage.streamers.has(m.id),
+      hasStreamerRole: config.discord.streamerRoleId ? m.roles.cache.has(config.discord.streamerRoleId) : false
+    }));
+
+    // MÉTODO 3: Si hay pocos resultados en caché, intentar fetch limitado
+    if (results.length < 5 && guild.memberCount < 1000) {
       try {
-        console.log(`🔍 Intentando búsqueda API de Discord...`);
-        // Esto solo funciona si el bot tiene privilegios y el servidor no es gigante
+        console.log(`🔍 Intentando fetch de Discord API...`);
         const fetchedMembers = await guild.members.fetch({ 
           query: q, 
-          limit: 10,
-          cache: true 
+          limit: 10 
         });
         
-        if (fetchedMembers && fetchedMembers.size > 0) {
-          results = fetchedMembers.filter(m => !m.user.bot).map(m => ({
+        const newMembers = fetchedMembers.filter(m => !m.user.bot && !results.find(r => r.id === m.id));
+        
+        for (const m of newMembers.values()) {
+          results.push({
             id: m.id,
             displayName: m.displayName || m.user.username,
             username: m.user.username,
             avatar: m.user.displayAvatarURL({ size: 64 }),
             isRegistered: storage.streamers.has(m.id),
-            hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false
-          }));
+            hasStreamerRole: config.discord.streamerRoleId ? m.roles.cache.has(config.discord.streamerRoleId) : false
+          });
         }
       } catch (e) {
-        console.log('⚠️ Búsqueda API falló (normal en servidores grandes):', e.message);
-        // No es un error crítico, simplemente no hay resultados adicionales
+        console.log('⚠️ Búsqueda API limitada o falló:', e.message);
       }
     }
 
@@ -940,23 +959,19 @@ async function getStreamData(platform, username) {
   }
 }
 
-// ✅ NUEVA FUNCIÓN: Verificar si el contenido está relacionado con El Patio RP
+// ✅ FUNCIÓN: Verificar si el contenido está relacionado con El Patio RP
 function isRelatedToPatioRP(streamData) {
-  // Si el modo estricto está desactivado, permitir todo
   if (!config.filters.strictMode) return true;
   
   const title = (streamData.title || '').toLowerCase();
   const game = (streamData.game || '').toLowerCase();
   
-  // Verificar juegos permitidos
   const isAllowedGame = config.filters.allowedGames.some(g => game.includes(g.toLowerCase()));
   if (isAllowedGame) return true;
   
-  // Verificar palabras clave en el título
   const hasKeyword = config.filters.keywords.some(k => title.includes(k.toLowerCase()));
   if (hasKeyword) return true;
   
-  // Si no cumple ninguna condición, no está relacionado
   console.log(`🚫 Filtro aplicado: "${title}" no está relacionado con El Patio RP`);
   return false;
 }
@@ -1013,10 +1028,9 @@ function markNotified(streamKey) {
   for (const [k,t] of storage.notifiedStreams.entries()) { if (t<cutoff) storage.notifiedStreams.delete(k); }
 }
 
-// ✅ CORREGIDO: Notificación CON @everyone y validación de contenido Patio RP
+// ✅ CORREGIDO: Notificación CON @everyone y URLs sin espacios
 async function sendLiveNotification(platform, member, username, streamData, streamerData) {
   try {
-    // Validación de contenido relacionado con El Patio RP (CORRECCIÓN #2)
     if (!isRelatedToPatioRP(streamData)) {
       console.log(`🚫 Notificación bloqueada: Contenido no relacionado con El Patio RP - ${streamData.title}`);
       return;
@@ -1057,6 +1071,8 @@ async function sendLiveNotification(platform, member, username, streamData, stre
 
     const mainBtn   = new ButtonBuilder().setLabel(`${p.emoji} ${p.watchLabel}`).setStyle(ButtonStyle.Link).setURL(streamUrl);
     const extraBtns = [];
+    
+    // URLs corregidas sin espacios
     if (platform!=='twitch'  && plats.twitch)    extraBtns.push(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/${plats.twitch}`));
     if (platform!=='kick'    && plats.kick)      extraBtns.push(new ButtonBuilder().setLabel('🟢 Kick').setStyle(ButtonStyle.Link).setURL(`https://kick.com/${plats.kick}`));
     if (platform!=='tiktok'  && plats.tiktok)    extraBtns.push(new ButtonBuilder().setLabel('⚫ TikTok').setStyle(ButtonStyle.Link).setURL(`https://www.tiktok.com/@${plats.tiktok}`));
@@ -1065,7 +1081,6 @@ async function sendLiveNotification(platform, member, username, streamData, stre
     const components=[new ActionRowBuilder().addComponents(mainBtn)];
     if (extraBtns.length) components.push(new ActionRowBuilder().addComponents(...extraBtns.slice(0,4)));
 
-    // ✅ CORRECCIÓN #1: Mensaje CON @everyone y mención al rol si existe
     const mentionRole = config.discord.streamerRoleId ? `<@&${config.discord.streamerRoleId}>` : '';
     const messageContent = `@everyone ${mentionRole} ¡**${member.displayName}** está en vivo en **${p.name}**! ${p.emoji}`;
     
@@ -1112,6 +1127,7 @@ async function checkAndGrantRewards(userId) {
   saveStorage();
 }
 
+// ✅ CORREGIDO: URLs sin espacios en plataformas
 async function createStreamerThread(member, platforms, bio, color) {
   const guild        = client.guilds.cache.get(config.discord.guildId);
   const forumChannel = guild?.channels.cache.get(config.discord.forumChannelId);
@@ -1228,7 +1244,6 @@ async function checkAndNotify(platform, userId, username, member, streamerData) 
   }
   storage.liveStreams.set(streamKey,{startedAt:new Date().toISOString(),currentViewers:streamData.viewers,viewers:streamData.viewers,peakViewers:streamData.viewers,platform,title:streamData.title,silent:false});
   
-  // Intentar enviar notificación (si pasa el filtro de contenido)
   await sendLiveNotification(platform,member,username,streamData,streamerData);
   markNotified(streamKey);
 
@@ -1487,6 +1502,17 @@ client.once('ready', async () => {
   
   loadStorage();
   await registerCommands();
+  
+  // Precargar miembros para mejorar búsqueda (opcional)
+  try {
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (guild && guild.memberCount < 5000) {
+      await guild.members.fetch();
+      console.log(`📊 Precargados ${guild.members.cache.size} miembros en caché`);
+    }
+  } catch(e) {
+    console.log('⚠️ No se pudo precargar todos los miembros (normal en servidores grandes)');
+  }
   
   setInterval(checkAllStreams, config.notifications.checkInterval);
   console.log(`🔄 Verificación cada ${config.notifications.checkInterval/1000}s`);
