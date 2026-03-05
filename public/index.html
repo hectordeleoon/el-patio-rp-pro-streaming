@@ -3,629 +3,1722 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Patio Bot - Admin Dashboard</title>
+    <title>El Patio Bot | Admin Control v10.0</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #fff; }
-        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: #1a1a1a; padding: 40px; border-radius: 10px; border: 1px solid #333; width: 90%; max-width: 400px; }
-        .login-box h1 { color: #9146FF; margin-bottom: 20px; text-align: center; }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
-        .login-box button { width: 100%; padding: 12px; background: #9146FF; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .login-box button:hover { background: #7c3aed; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #050505;
+            --bg-secondary: #0a0a0f;
+            --bg-card: #111118;
+            --bg-hover: #1a1a24;
+            --accent: #9146FF;
+            --accent-glow: rgba(145, 70, 255, 0.4);
+            --success: #00ff88;
+            --danger: #ff0040;
+            --warning: #ffaa00;
+            --info: #00d4ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --border: #2a2a3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(145, 70, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.05) 0%, transparent 40%);
+        }
+
+        /* Login Premium */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a0b2e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-box {
+            background: rgba(17, 17, 24, 0.95);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            padding: 50px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 0 60px var(--accent-glow), inset 0 0 60px rgba(145, 70, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--accent), transparent, var(--accent));
+            border-radius: 20px;
+            opacity: 0.3;
+            z-index: -1;
+            animation: borderRotate 3s linear infinite;
+        }
+
+        @keyframes borderRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-box h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-box .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(145, 70, 255, 0.2);
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            transition: all 0.3s;
+            pointer-events: none;
+            font-size: 0.9rem;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 15px;
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: var(--bg-card);
+            padding: 0 5px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Layout Principal */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
         .hidden { display: none !important; }
-        
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background: #1a1a1a; border-right: 1px solid #333; padding: 20px 0; }
-        .sidebar h2 { padding: 0 20px 20px; color: #9146FF; font-size: 1.2rem; border-bottom: 1px solid #333; margin-bottom: 20px; }
-        .nav-item { padding: 15px 20px; cursor: pointer; transition: all 0.3s; border-left: 3px solid transparent; }
-        .nav-item:hover { background: #252525; border-left-color: #9146FF; }
-        .nav-item.active { background: #252525; border-left-color: #9146FF; color: #9146FF; }
-        .nav-item i { margin-right: 10px; }
-        
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; max-height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #333; }
-        .header h1 { font-size: 1.8rem; }
-        .status-badge { padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; background: #22c55e; color: #000; font-weight: bold; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; }
-        .card h3 { color: #888; font-size: 0.9rem; margin-bottom: 10px; text-transform: uppercase; }
-        .card .value { font-size: 2rem; font-weight: bold; color: #fff; }
-        .card .value.small { font-size: 1.5rem; }
-        
-        .section { display: none; }
-        .section.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
-        th { background: #252525; color: #9146FF; font-weight: 600; }
-        tr:hover { background: #252525; }
-        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; margin-right: 5px; }
-        .btn-primary { background: #9146FF; color: #fff; }
-        .btn-danger { background: #dc2626; color: #fff; }
-        .btn-success { background: #22c55e; color: #000; }
-        .btn-warning { background: #f59e0b; color: #000; }
-        .btn:hover { opacity: 0.8; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #888; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
-        .form-group textarea { min-height: 100px; resize: vertical; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .tab { padding: 10px 20px; cursor: pointer; border-radius: 5px; }
-        .tab.active { background: #9146FF; }
-        
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .badge-live { background: #dc2626; color: #fff; }
-        .badge-offline { background: #666; color: #fff; }
-        .badge-pending { background: #f59e0b; color: #000; }
-        
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .error { background: #dc2626; color: #fff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .success { background: #22c55e; color: #000; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        
-        .search-box { margin-bottom: 20px; }
-        .search-box input { width: 100%; max-width: 400px; padding: 10px; background: #0f0f0f; border: 1px solid #333; color: #fff; border-radius: 5px; }
-        
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; border: 1px solid #333; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-btn { font-size: 1.5rem; cursor: pointer; color: #666; }
-        .close-btn:hover { color: #fff; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-        .stat-item { text-align: center; padding: 15px; background: #0f0f0f; border-radius: 5px; }
-        .stat-value { font-size: 1.5rem; font-weight: bold; color: #9146FF; }
-        .stat-label { font-size: 0.8rem; color: #666; margin-top: 5px; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            padding: 20px 0;
+            transition: all 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 25px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .nav-section {
+            padding: 0 15px;
+            margin-bottom: 10px;
+        }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            padding: 0 10px;
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 4px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--accent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(145, 70, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .nav-item.active::before {
+            opacity: 1;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            opacity: 0.3;
+        }
+
+        .stat-card.live::after {
+            background: radial-gradient(circle, rgba(255, 0, 64, 0.3) 0%, transparent 70%);
+        }
+
+        .stat-card.warning::after {
+            background: radial-gradient(circle, rgba(255, 170, 0, 0.3) 0%, transparent 70%);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(145, 70, 255, 0.1);
+            border: 1px solid rgba(145, 70, 255, 0.2);
+        }
+
+        .stat-card.live .stat-icon {
+            background: rgba(255, 0, 64, 0.1);
+            border-color: rgba(255, 0, 64, 0.2);
+            animation: livePulse 2s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 64, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 0, 64, 0); }
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Live Now Section */
+        .live-section {
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.05), rgba(145, 70, 255, 0.05));
+            border: 1px solid rgba(255, 0, 64, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .live-section::before {
+            content: '🔴 LIVE';
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: var(--danger);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            animation: pulse 2s infinite;
+        }
+
+        .section-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .live-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .live-card:hover {
+            transform: scale(1.02);
+            border-color: var(--danger);
+            box-shadow: 0 0 30px rgba(255, 0, 64, 0.2);
+        }
+
+        .live-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--danger);
+            position: relative;
+        }
+
+        .live-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 15px;
+            height: 15px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 3px solid var(--bg-card);
+        }
+
+        .live-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .live-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .live-badge {
+            display: inline-block;
+            background: rgba(255, 0, 64, 0.2);
+            color: var(--danger);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Content Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards y Tablas */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Tabla Moderna */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            color: var(--text-primary);
+            background: rgba(145, 70, 255, 0.03);
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-offline {
+            background: rgba(139, 139, 158, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        /* Botones */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-glow {
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* Formularios */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.1);
+        }
+
+        /* User Search */
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(145, 70, 255, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .user-result {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-result:hover {
+            background: var(--bg-hover);
+        }
+
+        .user-result img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+
+        .selected-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: linear-gradient(135deg, rgba(145, 70, 255, 0.1), rgba(145, 70, 255, 0.05));
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .selected-user img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--accent);
+        }
+
+        .selected-user-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .selected-user-info p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 25px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s;
+            border-left: 4px solid var(--accent);
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-card) 50%, var(--bg-hover) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            height: 20px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <!-- Login -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
-            <h1>🔐 El Patio Admin</h1>
-            <input type="password" id="adminKey" placeholder="Introduce la clave de administrador...">
-            <button onclick="login()">Acceder</button>
-            <p style="margin-top: 15px; font-size: 0.8rem; color: #666; text-align: center;">
-                Usa la clave definida en DASHBOARD_ADMIN_KEY o DASHBOARD_STAFF_KEY
-            </p>
+            <h1>⚡ EL PATIO BOT</h1>
+            <div class="subtitle">Panel de Control Avanzado v10.0</div>
+            <div class="input-group">
+                <input type="password" id="adminKey" placeholder=" " autocomplete="off">
+                <label>Clave de Acceso</label>
+            </div>
+            <button class="btn-primary" onclick="login()">
+                <span>🚀</span> ACCEDER AL SISTEMA
+            </button>
         </div>
     </div>
 
     <!-- Main App -->
     <div id="app" class="layout hidden">
-        <div class="sidebar">
-            <h2>🎮 El Patio Bot</h2>
-            <div class="nav-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
-            <div class="nav-item" onclick="showSection('streamers')">👥 Streamers</div>
-            <div class="nav-item" onclick="showSection('solicitudes')">📝 Solicitudes <span id="badge-solicitudes" class="badge badge-pending hidden">0</span></div>
-            <div class="nav-item" onclick="showSection('posts')">📱 Posts Redes</div>
-            <div class="nav-item" onclick="showSection('clips')">🎬 Clips IA</div>
-            <div class="nav-item" onclick="showSection('top3')">🏆 Top 3</div>
-            <div class="nav-item" onclick="showSection('torneos')">⚔️ Torneos</div>
-            <div class="nav-item" onclick="showSection('apuestas')">🎲 Apuestas</div>
-            <div class="nav-item" onclick="showSection('horarios')">📅 Horarios</div>
-            <div class="nav-item" onclick="showSection('config')">⚙️ Config</div>
-            <div class="nav-item" onclick="showSection('logs')">📋 Logs</div>
-        </div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">⚡</div>
+                    <span>EL PATIO BOT</span>
+                </div>
+            </div>
 
-        <div class="main-content">
-            <!-- Dashboard -->
+            <div class="nav-section">
+                <div class="nav-section-title">Principal</div>
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <span>📊</span> Dashboard
+                </div>
+                <div class="nav-item" onclick="showSection('register')">
+                    <span>➕</span> Registro Directo
+                </div>
+                <div class="nav-item" onclick="showSection('streamers')">
+                    <span>👥</span> Streamers
+                </div>
+                <div class="nav-item" onclick="showSection('pending')">
+                    <span>📝</span> Solicitudes <span id="nav-pending-badge" class="badge hidden">0</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Gestión</div>
+                <div class="nav-item" onclick="showSection('live')">
+                    <span>🔴</span> En Vivo Ahora
+                </div>
+                <div class="nav-item" onclick="showSection('tournaments')">
+                    <span>🏆</span> Torneos
+                </div>
+                <div class="nav-item" onclick="showSection('clips')">
+                    <span>🎬</span> Clips IA
+                </div>
+                <div class="nav-item" onclick="showSection('config')">
+                    <span>⚙️</span> Configuración
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
             <div id="section-dashboard" class="section active">
                 <div class="header">
-                    <h1>Dashboard</h1>
-                    <span class="status-badge">● Online</span>
-                </div>
-                <div class="grid">
-                    <div class="card">
-                        <h3>Streamers Registrados</h3>
-                        <div class="value" id="stat-streamers">0</div>
+                    <div class="header-title">
+                        <h1>Dashboard</h1>
+                        <p>Bienvenido al panel de control de El Patio RP</p>
                     </div>
-                    <div class="card">
-                        <h3>En Vivo Ahora</h3>
-                        <div class="value" id="stat-live">0</div>
-                    </div>
-                    <div class="card">
-                        <h3>Solicitudes Pendientes</h3>
-                        <div class="value" id="stat-pending">0</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Coins en Economía</h3>
-                        <div class="value" id="stat-coins">0</div>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span>Sistema Online</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="checkNow()">🔄 Forzar Verificación Ahora</button>
-                <div id="dashboard-msg"></div>
-            </div>
 
-            <!-- Streamers -->
-            <div id="section-streamers" class="section">
-                <div class="header"><h1>Gestión de Streamers</h1></div>
-                <div class="search-box">
-                    <input type="text" id="search-streamer" placeholder="Buscar streamer..." oninput="filterStreamers()">
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Plataformas</th>
-                            <th>Estado</th>
-                            <th>Stats</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-streamers">
-                        <tr><td colspan="5" class="loading">Cargando...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Solicitudes -->
-            <div id="section-solicitudes" class="section">
-                <div class="header"><h1>Solicitudes Pendientes</h1></div>
-                <div id="lista-solicitudes">
-                    <div class="loading">Cargando solicitudes...</div>
-                </div>
-            </div>
-
-            <!-- Posts -->
-            <div id="section-posts" class="section">
-                <div class="header"><h1>Posts en Redes Sociales</h1></div>
-                <div class="card" style="margin-bottom: 20px;">
-                    <h3>Crear Nuevo Post</h3>
-                    <div class="form-group">
-                        <label>Plataforma</label>
-                        <select id="post-platform">
-                            <option value="twitter">Twitter/X</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="tiktok">TikTok</option>
-                            <option value="discord">Discord</option>
-                        </select>
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-change">Total</div>
+                        </div>
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">Streamers Registrados</div>
                     </div>
-                    <div class="form-group">
-                        <label>Contenido</label>
-                        <textarea id="post-content" placeholder="Texto del post..."></textarea>
+
+                    <div class="stat-card live">
+                        <div class="stat-header">
+                            <div class="stat-icon">🔴</div>
+                            <div class="stat-change" style="color: var(--danger)">LIVE</div>
+                        </div>
+                        <div class="stat-value" id="stat-live" style="color: var(--danger)">0</div>
+                        <div class="stat-label">Transmitiendo Ahora</div>
                     </div>
-                    <div class="form-group">
-                        <label>URL (opcional)</label>
-                        <input type="text" id="post-url" placeholder="https://...">
+
+                    <div class="stat-card warning">
+                        <div class="stat-header">
+                            <div class="stat-icon">📝</div>
+                            <div class="stat-change" style="color: var(--warning)">Pendientes</div>
+                        </div>
+                        <div class="stat-value" id="stat-pending" style="color: var(--warning)">0</div>
+                        <div class="stat-label">Solicitudes</div>
                     </div>
-                    <button class="btn btn-primary" onclick="createPost()">Publicar</button>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">🪙</div>
+                            <div class="stat-change" style="color: var(--info)">Economía</div>
+                        </div>
+                        <div class="stat-value" id="stat-coins">0</div>
+                        <div class="stat-label">Total Coins</div>
+                    </div>
                 </div>
-                <div id="lista-posts"></div>
+
+                <!-- Live Now Preview -->
+                <div class="live-section" id="dashboard-live-section" style="display: none;">
+                    <div class="section-title">
+                        <span>🔴</span> En Vivo Ahora
+                    </div>
+                    <div class="live-grid" id="dashboard-live-grid">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚡ Acciones Rápidas</div>
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="checkNow()">
+                            <span>🔄</span> Forzar Verificación
+                        </button>
+                        <button class="btn btn-primary btn-glow" onclick="showSection('register')">
+                            <span>➕</span> Registrar Nuevo Streamer
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadLogs()">
+                            <span>📋</span> Ver Logs
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Clips -->
-            <div id="section-clips" class="section">
-                <div class="header"><h1>Clips Generados por IA</h1></div>
-                <div id="lista-clips" class="grid"></div>
-            </div>
-
-            <!-- Top 3 -->
-            <div id="section-top3" class="section">
+            <!-- Registro Directo Section -->
+            <div id="section-register" class="section">
                 <div class="header">
-                    <h1>🏆 Top 3 Semanal</h1>
-                    <button class="btn btn-warning" onclick="resetTop3()">Reiniciar Semana</button>
+                    <div class="header-title">
+                        <h1>Registro Directo</h1>
+                        <p>Busca y registra streamers directamente desde Discord</p>
+                    </div>
                 </div>
-                <div id="top3-content"></div>
-            </div>
 
-            <!-- Torneos -->
-            <div id="section-torneos" class="section">
-                <div class="header"><h1>Gestión de Torneos</h1></div>
-                <div class="card" style="margin-bottom: 20px;">
-                    <h3>Crear Torneo</h3>
-                    <div class="form-group">
-                        <label>Nombre</label>
-                        <input type="text" id="tournament-name" placeholder="Torneo de Verano">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🔍 Buscar Usuario de Discord</div>
                     </div>
-                    <div class="form-group">
-                        <label>Métrica</label>
-                        <select id="tournament-metric">
-                            <option value="viewers">Más Viewers</option>
-                            <option value="streams">Más Streams</option>
-                            <option value="clips">Más Clips Virales</option>
-                        </select>
+
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" 
+                               class="search-input" 
+                               id="discord-search" 
+                               placeholder="Escribe nombre de usuario o ID de Discord..."
+                               autocomplete="off">
+                        <div id="search-results" class="search-results hidden"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Duración (horas)</label>
-                        <input type="number" id="tournament-duration" value="24">
+
+                    <div id="selected-user-container" class="hidden">
+                        <div class="selected-user">
+                            <img id="sel-avatar" src="" alt="">
+                            <div class="selected-user-info">
+                                <h3 id="sel-name">Usuario</h3>
+                                <p id="sel-id">ID: 000000000</p>
+                                <button class="btn btn-secondary" onclick="clearSelection()">Cambiar Usuario</button>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>🟣 Twitch (usuario o URL)</label>
+                                <input type="text" id="reg-twitch" placeholder="ej: twitch.tv/usuario">
+                            </div>
+                            <div class="form-group">
+                                <label>🟢 Kick (usuario o URL)</label>
+                                <input type="text" id="reg-kick" placeholder="ej: kick.com/usuario">
+                            </div>
+                            <div class="form-group">
+                                <label>⚫ TikTok (usuario o URL)</label>
+                                <input type="text" id="reg-tiktok" placeholder="ej: @usuario">
+                            </div>
+                            <div class="form-group">
+                                <label>🔴 YouTube (usuario o URL)</label>
+                                <input type="text" id="reg-youtube" placeholder="ej: @canal">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📝 Biografía</label>
+                            <textarea id="reg-bio" rows="3" placeholder="Descripción del streamer..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🎨 Color del Embed (HEX)</label>
+                            <input type="text" id="reg-color" value="#9146FF" placeholder="#9146FF">
+                        </div>
+
+                        <button class="btn btn-primary btn-glow" onclick="registerStreamer()" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+                            <span>✨</span> REGISTRAR STREAMER AHORA
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Premio (coins)</label>
-                        <input type="number" id="tournament-prize" value="1000">
-                    </div>
-                    <button class="btn btn-primary" onclick="createTournament()">Crear Torneo</button>
                 </div>
-                <div id="lista-torneos"></div>
             </div>
 
-            <!-- Apuestas -->
-            <div id="section-apuestas" class="section">
-                <div class="header"><h1>Sistema de Apuestas</h1></div>
-                <div class="tabs">
-                    <div class="tab active" onclick="showBets('active')">Activas</div>
-                    <div class="tab" onclick="showBets('history')">Historial</div>
+            <!-- Streamers Section -->
+            <div id="section-streamers" class="section">
+                <div class="header">
+                    <div class="header-title">
+                        <h1>Gestión de Streamers</h1>
+                        <p>Administra todos los streamers registrados</p>
+                    </div>
+                    <div class="search-container" style="width: 300px;">
+                        <input type="text" class="search-input" id="streamer-search" placeholder="Buscar streamer..." oninput="filterStreamers()">
+                    </div>
                 </div>
-                <div id="lista-apuestas"></div>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Streamer</th>
+                                    <th>Plataformas</th>
+                                    <th>Estado</th>
+                                    <th>Stats</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="streamers-table">
+                                <tr>
+                                    <td colspan="5" class="empty-state">
+                                        <div class="skeleton" style="width: 100%; height: 40px;"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Horarios -->
-            <div id="section-horarios" class="section">
-                <div class="header"><h1>Horarios de Streams</h1></div>
-                <div id="lista-horarios"></div>
+            <!-- Pending Section -->
+            <div id="section-pending" class="section">
+                <div class="header">
+                    <div class="header-title">
+                        <h1>Solicitudes Pendientes</h1>
+                        <p>Aprobaciones de nuevos streamers</p>
+                    </div>
+                </div>
+                <div id="pending-container">
+                    <div class="card">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <h3>No hay solicitudes pendientes</h3>
+                            <p>Cuando alguien solicite unirse, aparecerá aquí</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Config -->
+            <!-- Live Section -->
+            <div id="section-live" class="section">
+                <div class="header">
+                    <div class="header-title">
+                        <h1>🔴 Transmisiones en Vivo</h1>
+                        <p>Monitoreo en tiempo real</p>
+                    </div>
+                </div>
+                <div id="live-container">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Other sections placeholders -->
+            <div id="section-tournaments" class="section">
+                <div class="header"><h1>🏆 Torneos</h1></div>
+                <div class="card empty-state">
+                    <div class="empty-state-icon">🏆</div>
+                    <h3>Gestión de Torneos</h3>
+                    <p>Próximamente disponible</p>
+                </div>
+            </div>
+
+            <div id="section-clips" class="section">
+                <div class="header"><h1>🎬 Clips IA</h1></div>
+                <div class="card empty-state">
+                    <div class="empty-state-icon">🎬</div>
+                    <h3>Clips Generados</h3>
+                    <p>No hay clips recientes</p>
+                </div>
+            </div>
+
             <div id="section-config" class="section">
-                <div class="header"><h1>Configuración del Bot</h1></div>
+                <div class="header"><h1>⚙️ Configuración</h1></div>
                 <div class="card">
                     <div class="form-group">
                         <label>Cooldown Notificaciones (minutos)</label>
                         <input type="number" id="config-cooldown" value="30">
                     </div>
-                    <div class="form-group">
-                        <label>Intervalo Verificación (ms)</label>
-                        <input type="number" id="config-interval" value="60000">
-                    </div>
-                    <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                    <button class="btn btn-primary" onclick="saveConfig()">Guardar</button>
                 </div>
             </div>
-
-            <!-- Logs -->
-            <div id="section-logs" class="section">
-                <div class="header"><h1>Logs del Sistema</h1></div>
-                <div style="background: #0f0f0f; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 0.85rem; max-height: 600px; overflow-y: auto;" id="logs-content">
-                    Cargando logs...
-                </div>
-                <button class="btn btn-primary" onclick="loadLogs()" style="margin-top: 10px;">Actualizar</button>
-            </div>
-        </div>
+        </main>
     </div>
 
     <script>
-        const API_URL = '';
+        // Global State
         let authKey = '';
         let currentSection = 'dashboard';
-        let streamersData = [];
+        let streamersList = [];
+        let selectedDiscordUser = null;
+        let searchTimeout = null;
 
-      function login() {
-    authKey = document.getElementById('adminKey').value.trim(); // Agregamos .trim()
-    if (!authKey) return alert('Introduce una clave');
-    
-    console.log('Enviando clave:', authKey); // Debug
-    
-    fetch('/api/stats', { headers: { 'x-admin-key': authKey } })
-        .then(r => {
-            if (r.ok) {
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
-                initDashboard();
-            } else {
-                alert('Clave incorrecta. Intenta de nuevo.');
-            }
-        });
-}
-
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('section-' + id).classList.add('active');
-            event.target.classList.add('active');
-            currentSection = id;
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            // Load data
-            if (id === 'streamers') loadStreamers();
-            if (id === 'solicitudes') loadSolicitudes();
-            if (id === 'clips') loadClips();
-            if (id === 'top3') loadTop3();
-            if (id === 'torneos') loadTorneos();
-            if (id === 'apuestas') loadApuestas();
-            if (id === 'horarios') loadHorarios();
-            if (id === 'logs') loadLogs();
-            if (id === 'config') loadConfig();
-            if (id === 'posts') loadPosts();
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div>${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
         }
 
+        // Auth
+        async function login() {
+            const key = document.getElementById('adminKey').value.trim();
+            if (!key) return showToast('Introduce una clave', 'error');
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key })
+                });
+
+                if (res.ok) {
+                    authKey = key;
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    showToast('✨ Bienvenido al Panel de Control');
+                    initDashboard();
+                    startRealtimeUpdates();
+                } else {
+                    showToast('Clave incorrecta', 'error');
+                }
+            } catch (e) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+
+        // API Helper
         async function api(endpoint, options = {}) {
-            options.headers = { ...options.headers, 'x-admin-key': authKey, 'Content-Type': 'application/json' };
+            options.headers = {
+                ...options.headers,
+                'x-admin-key': authKey,
+                'Content-Type': 'application/json'
+            };
+            
             const res = await fetch(endpoint, options);
-            if (!res.ok) throw new Error('Error ' + res.status);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Error desconocido' }));
+                throw new Error(err.error || `Error ${res.status}`);
+            }
             return res.json();
         }
 
-        async function initDashboard() {
-            const stats = await api('/api/stats');
-            document.getElementById('stat-streamers').textContent = stats.streamers;
-            document.getElementById('stat-live').textContent = stats.liveNow;
-            document.getElementById('stat-pending').textContent = stats.pending;
-            document.getElementById('stat-coins').textContent = stats.totalCoins.toLocaleString();
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            if (stats.pending > 0) {
-                const badge = document.getElementById('badge-solicitudes');
-                badge.textContent = stats.pending;
-                badge.classList.remove('hidden');
+            const section = document.getElementById(`section-${sectionId}`);
+            if (section) section.classList.add('active');
+            
+            event.target.closest('.nav-item')?.classList.add('active');
+            currentSection = sectionId;
+            
+            // Load specific data
+            if (sectionId === 'streamers') loadStreamers();
+            if (sectionId === 'pending') loadPending();
+            if (sectionId === 'live') loadLiveSection();
+        }
+
+        // Dashboard
+        async function initDashboard() {
+            try {
+                const [stats, live] = await Promise.all([
+                    api('/api/stats'),
+                    api('/live')
+                ]);
+                
+                // Update counters
+                document.getElementById('stat-total').textContent = stats.streamers;
+                document.getElementById('stat-live').textContent = live.length;
+                document.getElementById('stat-pending').textContent = stats.pending;
+                document.getElementById('stat-coins').textContent = stats.totalCoins.toLocaleString();
+                
+                // Update badge
+                const badge = document.getElementById('nav-pending-badge');
+                if (stats.pending > 0) {
+                    badge.textContent = stats.pending;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+                
+                // Show live preview if any
+                if (live.length > 0) {
+                    const liveSection = document.getElementById('dashboard-live-section');
+                    const liveGrid = document.getElementById('dashboard-live-grid');
+                    liveSection.style.display = 'block';
+                    
+                    liveGrid.innerHTML = live.slice(0, 3).map(s => `
+                        <div class="live-card">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.displayName)}&background=random" class="live-avatar" alt="">
+                            <div class="live-info">
+                                <h3>${s.displayName}</h3>
+                                <p>${s.title || 'En vivo'}</p>
+                                <span class="live-badge">${s.viewers || 0} viewers</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Error loading dashboard:', e);
             }
+        }
+
+        function startRealtimeUpdates() {
+            setInterval(() => {
+                if (currentSection === 'dashboard') initDashboard();
+            }, 30000);
         }
 
         async function checkNow() {
             try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳</span> Verificando...';
                 await api('/api/check-now', { method: 'POST' });
-                document.getElementById('dashboard-msg').innerHTML = '<div class="success">✅ Verificación completada</div>';
-                setTimeout(() => initDashboard(), 1000);
-            } catch(e) {
-                document.getElementById('dashboard-msg').innerHTML = '<div class="error">❌ Error</div>';
+                showToast('Verificación completada');
+                initDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            } finally {
+                event.target.disabled = false;
+                event.target.innerHTML = '<span>🔄</span> Forzar Verificación';
             }
         }
 
+        // Discord User Search
+        document.getElementById('discord-search')?.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                document.getElementById('search-results').classList.add('hidden');
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => searchDiscordUsers(query), 300);
+        });
+
+        async function searchDiscordUsers(query) {
+            try {
+                const results = await api(`/admin/find-member?q=${encodeURIComponent(query)}`);
+                const container = document.getElementById('search-results');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="user-result" style="color: #666; cursor: default;">No se encontraron usuarios</div>';
+                } else {
+                    container.innerHTML = results.map(u => `
+                        <div class="user-result" onclick="selectDiscordUser('${u.id}', '${u.displayName}', '${u.username}', '${u.avatar}', ${u.isRegistered})">
+                            <img src="${u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="">
+                            <div>
+                                <div style="font-weight: 600; color: white;">${u.displayName}</div>
+                                <div style="font-size: 0.85rem; color: #666;">@${u.username}</div>
+                            </div>
+                            ${u.isRegistered ? '<span style="margin-left: auto; background: #ff0040; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">Registrado</span>' : '<span style="margin-left: auto; background: #00ff88; color: black; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">Disponible</span>'}
+                        </div>
+                    `).join('');
+                }
+                
+                container.classList.remove('hidden');
+            } catch (e) {
+                console.error('Search error:', e);
+            }
+        }
+
+        function selectDiscordUser(id, displayName, username, avatar, isRegistered) {
+            if (isRegistered) {
+                showToast('Este usuario ya está registrado', 'warning');
+                return;
+            }
+            
+            selectedDiscordUser = { id, displayName, username, avatar };
+            document.getElementById('sel-avatar').src = avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+            document.getElementById('sel-name').textContent = displayName;
+            document.getElementById('sel-id').textContent = `ID: ${id} (@${username})`;
+            
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('discord-search').value = '';
+            document.getElementById('selected-user-container').classList.remove('hidden');
+        }
+
+        function clearSelection() {
+            selectedDiscordUser = null;
+            document.getElementById('selected-user-container').classList.add('hidden');
+            document.getElementById('reg-twitch').value = '';
+            document.getElementById('reg-kick').value = '';
+            document.getElementById('reg-tiktok').value = '';
+            document.getElementById('reg-youtube').value = '';
+            document.getElementById('reg-bio').value = '';
+        }
+
+        async function registerStreamer() {
+            if (!selectedDiscordUser) {
+                showToast('Selecciona un usuario de Discord primero', 'error');
+                return;
+            }
+            
+            const platforms = {};
+            const twitch = document.getElementById('reg-twitch').value.trim();
+            const kick = document.getElementById('reg-kick').value.trim();
+            const tiktok = document.getElementById('reg-tiktok').value.trim();
+            const youtube = document.getElementById('reg-youtube').value.trim();
+            
+            if (twitch) platforms.twitch = twitch;
+            if (kick) platforms.kick = kick;
+            if (tiktok) platforms.tiktok = tiktok;
+            if (youtube) platforms.youtube = youtube;
+            
+            if (Object.keys(platforms).length === 0) {
+                showToast('Agrega al menos una plataforma', 'error');
+                return;
+            }
+            
+            try {
+                await api('/api/direct-register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: selectedDiscordUser.id,
+                        platforms: platforms,
+                        bio: document.getElementById('reg-bio').value.trim(),
+                        color: document.getElementById('reg-color').value.trim()
+                    })
+                });
+                
+                showToast(`✅ ${selectedDiscordUser.displayName} registrado correctamente`);
+                clearSelection();
+                initDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Streamers Management
         async function loadStreamers() {
             try {
-                streamersData = await api('/api/streamers');
+                const data = await api('/api/streamers');
+                streamersList = data;
                 renderStreamers();
-            } catch(e) {
-                document.getElementById('table-streamers').innerHTML = '<tr><td colspan="5" class="error">Error cargando</td></tr>';
+            } catch (e) {
+                showToast('Error cargando streamers', 'error');
             }
         }
 
         function renderStreamers() {
-            const filter = document.getElementById('search-streamer')?.value.toLowerCase() || '';
-            const filtered = streamersData.filter(s => 
+            const filter = document.getElementById('streamer-search')?.value.toLowerCase() || '';
+            const filtered = streamersList.filter(s => 
                 s.displayName?.toLowerCase().includes(filter) || 
                 s.uid?.includes(filter)
             );
             
-            const html = filtered.map(s => `
+            const tbody = document.getElementById('streamers-table');
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">👻</div>
+                            <h3>No se encontraron streamers</h3>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(s => `
                 <tr>
                     <td>
-                        <strong>${s.displayName || 'Unknown'}</strong><br>
-                        <small style="color:#666">${s.uid}</small>
-                    </td>
-                    <td>
-                        ${s.platforms?.twitch ? '🟣 ' : ''}
-                        ${s.platforms?.kick ? '🟢 ' : ''}
-                        ${s.platforms?.tiktok ? '⚫ ' : ''}
-                        ${s.platforms?.youtube ? '🔴 ' : ''}
-                    </td>
-                    <td>${s.isLive ? '<span class="badge badge-live">EN VIVO</span>' : '<span class="badge badge-offline">Offline</span>'}</td>
-                    <td>
-                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap:5px; margin:0">
-                            <div class="stat-item" style="padding:5px"><div class="stat-value" style="font-size:1rem">${s.stats?.totalStreams || 0}</div><div class="stat-label">Streams</div></div>
-                            <div class="stat-item" style="padding:5px"><div class="stat-value" style="font-size:1rem">${s.coins || 0}</div><div class="stat-label">Coins</div></div>
+                        <div class="user-cell">
+                            <div class="user-avatar" style="background: ${s.color || '#9146FF'}">
+                                ${(s.displayName || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: white;">${s.displayName || 'Unknown'}</div>
+                                <div style="font-size: 0.85rem; color: #666;">${s.uid}</div>
+                            </div>
                         </div>
                     </td>
                     <td>
-                        <button class="btn btn-danger" onclick="deleteStreamer('${s.uid}')">Eliminar</button>
+                        ${s.platforms?.twitch ? '<span class="platform-badge">🟣 Twitch</span>' : ''}
+                        ${s.platforms?.kick ? '<span class="platform-badge">🟢 Kick</span>' : ''}
+                        ${s.platforms?.tiktok ? '<span class="platform-badge">⚫ TikTok</span>' : ''}
+                    </td>
+                    <td>
+                        ${s.isLive 
+                            ? '<span class="status-badge status-online">● EN VIVO</span>' 
+                            : '<span class="status-badge status-offline">Offline</span>'
+                        }
+                    </td>
+                    <td>
+                        <div style="font-size: 0.9rem;">
+                            <div>📺 ${s.stats?.totalStreams || 0} streams</div>
+                            <div>⏱️ ${Math.floor(s.stats?.totalHours || 0)}h</div>
+                            <div>🪙 ${s.coins || 0} coins</div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteStreamer('${s.uid}')" style="padding: 5px 15px; font-size: 0.85rem;">
+                            🗑️ Eliminar
+                        </button>
                     </td>
                 </tr>
             `).join('');
-            
-            document.getElementById('table-streamers').innerHTML = html || '<tr><td colspan="5">No hay streamers</td></tr>';
         }
 
-        function filterStreamers() { renderStreamers(); }
+        function filterStreamers() {
+            renderStreamers();
+        }
 
         async function deleteStreamer(uid) {
-            if (!confirm('¿Eliminar este streamer?')) return;
-            await api('/api/streamer/' + uid, { method: 'DELETE' });
-            loadStreamers();
+            if (!confirm('¿Eliminar este streamer permanentemente?')) return;
+            
+            try {
+                await api(`/api/streamer/${uid}`, { method: 'DELETE' });
+                showToast('Streamer eliminado');
+                loadStreamers();
+                initDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
         }
 
-        async function loadSolicitudes() {
+        // Pending Requests
+        async function loadPending() {
             try {
                 const data = await api('/api/pending-registrations');
-                const container = document.getElementById('lista-solicitudes');
+                const container = document.getElementById('pending-container');
                 
-                if (!data.length) {
-                    container.innerHTML = '<div class="card">No hay solicitudes pendientes</div>';
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <h3>No hay solicitudes pendientes</h3>
+                                <p>Cuando alguien solicite unirse, aparecerá aquí</p>
+                            </div>
+                        </div>
+                    `;
                     return;
                 }
                 
-                container.innerHTML = data.map(s => `
+                container.innerHTML = data.map(p => `
                     <div class="card" style="margin-bottom: 15px;">
-                        <h3>${s.displayName || s.uid}</h3>
-                        <p>Plataformas: ${Object.keys(s.platforms || {}).join(', ')}</p>
-                        <p style="color:#888">${s.bio || 'Sin biografía'}</p>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-success" onclick="approve('${s.uid}')">✅ Aprobar</button>
-                            <button class="btn btn-danger" onclick="reject('${s.uid}')">❌ Rechazar</button>
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                            <img src="${p.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width: 60px; height: 60px; border-radius: 50%;">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">${p.displayName}</h3>
+                                <p style="color: #666; font-size: 0.9rem;">${p.bio || 'Sin biografía'}</p>
+                                <div style="margin-top: 10px;">
+                                    ${Object.entries(p.platforms || {}).map(([k,v]) => `<span class="platform-badge">${k}: ${v}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-success" onclick="approvePending('${p.uid}')">✅ Aprobar</button>
+                            <button class="btn btn-danger" onclick="rejectPending('${p.uid}')">❌ Rechazar</button>
                         </div>
                     </div>
                 `).join('');
-            } catch(e) {
-                document.getElementById('lista-solicitudes').innerHTML = '<div class="error">Error cargando</div>';
+            } catch (e) {
+                showToast('Error cargando solicitudes', 'error');
             }
         }
 
-        async function approve(uid) {
-            await api('/api/approve-registration/' + uid, { method: 'POST' });
-            loadSolicitudes();
-            initDashboard();
-        }
-
-        async function reject(uid) {
-            await api('/api/reject-registration/' + uid, { method: 'POST' });
-            loadSolicitudes();
-            initDashboard();
-        }
-
-        async function loadClips() {
+        async function approvePending(uid) {
             try {
-                const clips = await api('/api/clips');
-                const container = document.getElementById('lista-clips');
-                if (!clips.length) {
-                    container.innerHTML = '<div class="card">No hay clips generados</div>';
-                    return;
-                }
-                container.innerHTML = clips.map(c => `
-                    <div class="card">
-                        <h3>${c.title || 'Clip sin título'}</h3>
-                        <p>Streamer: ${c.streamerId}</p>
-                        <p>Viral Score: ${c.viralScore || 'N/A'}/100</p>
-                        <p>Categoría: ${c.category || 'N/A'}</p>
-                    </div>
-                `).join('');
-            } catch(e) {
-                document.getElementById('lista-clips').innerHTML = '<div class="error">Error</div>';
+                await api(`/api/approve-registration/${uid}`, { method: 'POST' });
+                showToast('Solicitud aprobada');
+                loadPending();
+                initDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
             }
         }
 
-        async function loadTop3() {
+        async function rejectPending(uid) {
             try {
-                const data = await api('/api/top3');
-                const container = document.getElementById('top3-content');
-                if (!data.length) {
-                    container.innerHTML = '<div class="card">No hay datos aún</div>';
+                await api(`/api/reject-registration/${uid}`, { method: 'POST' });
+                showToast('Solicitud rechazada');
+                loadPending();
+                initDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Live Section
+        async function loadLiveSection() {
+            try {
+                const live = await api('/live');
+                const container = document.getElementById('live-container');
+                
+                if (live.length === 0) {
+                    container.innerHTML = `
+                        <div class="card empty-state">
+                            <div class="empty-state-icon">😴</div>
+                            <h3>Nadie está transmitiendo</h3>
+                            <p>Cuando un streamer encienda, aparecerá aquí</p>
+                        </div>
+                    `;
                     return;
                 }
-                container.innerHTML = data.map((s, i) => `
-                    <div class="card" style="border-left: 5px solid ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32'}">
-                        <h3>#${i + 1} ${s.displayName}</h3>
-                        <div class="stats-grid">
-                            <div class="stat-item"><div class="stat-value">${s.peakViewers || 0}</div><div class="stat-label">Peak Viewers</div></div>
-                            <div class="stat-item"><div class="stat-value">${s.streams || 0}</div><div class="stat-label">Streams</div></div>
-                            <div class="stat-item"><div class="stat-value">${s.score || 0}</div><div class="stat-label">Score Total</div></div>
+                
+                container.innerHTML = live.map(s => `
+                    <div class="card" style="margin-bottom: 20px; border-left: 4px solid #ff0040;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="display: flex; gap: 20px;">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.displayName)}&background=ff0040&color=fff" style="width: 80px; height: 80px; border-radius: 50%;">
+                                <div>
+                                    <h2 style="margin-bottom: 10px; color: #ff0040;">🔴 ${s.displayName}</h2>
+                                    <p style="color: #aaa; margin-bottom: 10px; font-size: 1.1rem;">${s.title || 'Sin título'}</p>
+                                    <div style="display: flex; gap: 15px; color: #666; font-size: 0.9rem;">
+                                        <span>👥 ${s.viewers || 0} viewers</span>
+                                        <span>🎮 ${s.platform}</span>
+                                        <span>⏱️ ${s.startedAt ? new Date(s.startedAt).toLocaleTimeString() : 'Ahora'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="${s.streamUrl || '#'}" target="_blank" class="btn btn-success">Ver Stream</a>
                         </div>
                     </div>
                 `).join('');
-            } catch(e) {
-                document.getElementById('top3-content').innerHTML = '<div class="error">Error</div>';
+            } catch (e) {
+                showToast('Error cargando transmisiones', 'error');
             }
         }
 
-        async function resetTop3() {
-            if (!confirm('¿Reiniciar el Top 3 semanal?')) return;
-            await api('/api/top3/reset', { method: 'POST' });
-            loadTop3();
-        }
-
-        async function loadTorneos() {
-            try {
-                const data = await api('/api/tournaments');
-                document.getElementById('lista-torneos').innerHTML = data.map(t => `
-                    <div class="card">
-                        <h3>${t.name}</h3>
-                        <p>Métrica: ${t.metric} | Premio: ${t.prize} coins</p>
-                        <p>Estado: ${t.status}</p>
-                    </div>
-                `).join('') || '<div class="card">No hay torneos activos</div>';
-            } catch(e) {
-                document.getElementById('lista-torneos').innerHTML = '<div class="error">Error</div>';
-            }
-        }
-
-        async function createTournament() {
-            const body = {
-                name: document.getElementById('tournament-name').value,
-                metric: document.getElementById('tournament-metric').value,
-                duration: parseInt(document.getElementById('tournament-duration').value),
-                prize: parseInt(document.getElementById('tournament-prize').value)
-            };
-            await api('/api/tournament', { method: 'POST', body: JSON.stringify(body) });
-            loadTorneos();
-        }
-
-        async function loadApuestas(type = 'active') {
-            try {
-                const endpoint = type === 'active' ? '/api/bets' : '/api/bets/history';
-                const data = await api(endpoint);
-                document.getElementById('lista-apuestas').innerHTML = data.map(b => `
-                    <div class="card">
-                        <p>Apuesta: ${b.amount} coins</p>
-                        <p>Streamer: ${b.streamerId}</p>
-                        <p>Estado: ${b.status}</p>
-                    </div>
-                `).join('') || '<div class="card">No hay apuestas</div>';
-            } catch(e) {
-                document.getElementById('lista-apuestas').innerHTML = '<div class="error">Error</div>';
-            }
-        }
-
-        function showBets(type) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            loadApuestas(type);
-        }
-
-        async function loadHorarios() {
-            try {
-                const data = await api('/api/schedules');
-                document.getElementById('lista-horarios').innerHTML = data.map(h => `
-                    <div class="card">
-                        <h3>${h.displayName}</h3>
-                        <p>${h.day} a las ${h.time}</p>
-                        <p>Juego: ${h.game || 'No especificado'}</p>
-                    </div>
-                `).join('') || '<div class="card">No hay horarios configurados</div>';
-            } catch(e) {
-                document.getElementById('lista-horarios').innerHTML = '<div class="error">Error</div>';
-            }
-        }
-
-        async function loadConfig() {
-            try {
-                const data = await api('/api/config');
-                document.getElementById('config-cooldown').value = data.notifications.cooldownMinutes;
-                document.getElementById('config-interval').value = data.notifications.checkInterval;
-            } catch(e) {}
-        }
-
+        // Config
         async function saveConfig() {
-            const body = {
-                cooldownMinutes: parseInt(document.getElementById('config-cooldown').value),
-                checkInterval: parseInt(document.getElementById('config-interval').value)
-            };
-            await api('/api/config', { method: 'POST', body: JSON.stringify(body) });
-            alert('Configuración guardada');
+            try {
+                const cooldown = document.getElementById('config-cooldown').value;
+                await api('/api/config', {
+                    method: 'POST',
+                    body: JSON.stringify({ cooldownMinutes: parseInt(cooldown) })
+                });
+                showToast('Configuración guardada');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
         }
 
+        // Logs
         async function loadLogs() {
             try {
                 const logs = await api('/api/logs');
-                const html = logs.map(l => `
-                    <div style="margin-bottom: 5px; ${l.type === 'error' ? 'color: #ff4444' : 'color: #aaa'}">
-                        [${new Date(l.time).toLocaleTimeString()}] ${l.msg}
-                    </div>
-                `).join('');
-                document.getElementById('logs-content').innerHTML = html || 'No hay logs';
-            } catch(e) {
-                document.getElementById('logs-content').innerHTML = '<div class="error">Error cargando logs</div>';
+                console.log('Logs:', logs);
+                showToast('Logs cargados (ver consola)');
+            } catch (e) {
+                showToast('Error cargando logs', 'error');
             }
         }
 
-        async function loadPosts() {
-            try {
-                const posts = await api('/api/posts');
-                document.getElementById('lista-posts').innerHTML = posts.map(p => `
-                    <div class="card" style="margin-bottom: 10px;">
-                        <strong>${p.platform}</strong>
-                        <p>${p.content}</p>
-                        <small style="color:#666">${new Date(p.createdAt).toLocaleString()}</small>
-                    </div>
-                `).join('') || '<div class="card">No hay posts</div>';
-            } catch(e) {
-                document.getElementById('lista-posts').innerHTML = '<div class="error">Error</div>';
+        // Close search results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('search-results')?.classList.add('hidden');
             }
-        }
-
-        async function createPost() {
-            const body = {
-                platform: document.getElementById('post-platform').value,
-                content: document.getElementById('post-content').value,
-                url: document.getElementById('post-url').value
-            };
-            await api('/api/posts', { method: 'POST', body: JSON.stringify(body) });
-            document.getElementById('post-content').value = '';
-            document.getElementById('post-url').value = '';
-            loadPosts();
-        }
-
-        // Auto refresh cada 30 segundos si está en dashboard
-        setInterval(() => {
-            if (currentSection === 'dashboard') initDashboard();
-        }, 30000);
+        });
     </script>
 </body>
 </html>
