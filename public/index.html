@@ -1,305 +1,66 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Patio Bot | Admin Control</title>
+    <title>El Patio Admin</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f1e; color: white; }
-        
-        /* Login */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            display: flex; justify-content: center; align-items: center; z-index: 9999;
-        }
-        .login-box {
-            background: rgba(255,255,255,0.05); padding: 40px; border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px;
-            text-align: center;
-        }
-        .login-box h1 { color: #9146FF; margin-bottom: 10px; }
-        .login-box input {
-            width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #333;
-            border-radius: 8px; background: #0a0a0f; color: white; font-size: 16px;
-        }
-        .login-box button {
-            width: 100%; padding: 12px; background: #9146FF; color: white;
-            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
-            font-weight: bold;
-        }
-        .login-box button:hover { background: #7c3aed; }
-        .error-msg { color: #ff4444; margin-top: 10px; font-size: 14px; }
-        
-        /* App */
-        #app { display: none; padding: 20px; }
-        .header { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card {
-            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;
-            border-left: 4px solid #9146FF;
-        }
-        .stat-card h3 { color: #8b8b9e; font-size: 14px; margin-bottom: 5px; }
-        .stat-card .value { font-size: 32px; font-weight: bold; color: #9146FF; }
-        .hidden { display: none !important; }
-        
-        /* Búsqueda */
-        .search-box { margin: 20px 0; }
-        .search-box input {
-            width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
-            border: 1px solid #333; border-radius: 8px; color: white;
-        }
-        .results { background: rgba(255,255,255,0.05); border-radius: 8px; margin-top: 10px; max-height: 300px; overflow-y: auto; }
-        .user-item {
-            display: flex; align-items: center; gap: 10px; padding: 10px;
-            border-bottom: 1px solid #333; cursor: pointer;
-        }
-        .user-item:hover { background: rgba(255,255,255,0.1); }
-        .user-item img { width: 40px; height: 40px; border-radius: 50%; }
-        
-        button.action {
-            background: #9146FF; color: white; border: none; padding: 10px 20px;
-            border-radius: 8px; cursor: pointer; margin: 5px;
-        }
-        button.action:hover { background: #7c3aed; }
+        body { background: #111; color: white; font-family: Arial; padding: 50px; }
+        input, button { padding: 10px; margin: 5px; font-size: 16px; }
+        #login { max-width: 400px; margin: 0 auto; text-align: center; }
+        #panel { display: none; }
+        .error { color: #ff4444; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <!-- Login Overlay -->
-    <div id="loginOverlay">
-        <div class="login-box">
-            <h1>🎮 EL PATIO RP</h1>
-            <p style="color: #8b8b9e; margin-bottom: 20px;">Panel de Administración</p>
-            <input type="password" id="adminKey" placeholder="Clave de acceso" onkeypress="if(event.key==='Enter')login()">
-            <button onclick="login()">INGRESAR</button>
-            <div id="loginError" class="error-msg"></div>
-            <div style="margin-top: 15px; font-size: 12px; color: #666;">
-                <button onclick="testConnection()" style="background: transparent; border: 1px solid #333; color: #666; padding: 5px 10px; font-size: 12px; cursor: pointer;">
-                    Probar Conexión
-                </button>
-            </div>
-        </div>
+    <div id="login">
+        <h1>🎮 El Patio RP</h1>
+        <input type="password" id="key" placeholder="Clave admin"><br>
+        <button onclick="doLogin()">Entrar</button>
+        <div id="error" class="error"></div>
+        <br><br>
+        <button onclick="testAPI()" style="font-size: 12px; opacity: 0.5;">Test API</button>
+        <div id="test-result"></div>
     </div>
 
-    <!-- Main App -->
-    <div id="app">
-        <div class="header">
-            <h1>Dashboard El Patio RP</h1>
-            <p>Bienvenido al panel de control</p>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card">
-                <h3>STREAMERS</h3>
-                <div class="value" id="stat-streamers">-</div>
-            </div>
-            <div class="stat-card">
-                <h3>EN VIVO</h3>
-                <div class="value" id="stat-live" style="color: #ff4444;">-</div>
-            </div>
-            <div class="stat-card">
-                <h3>PENDIENTES</h3>
-                <div class="value" id="stat-pending" style="color: #ffaa00;">-</div>
-            </div>
-        </div>
-
-        <div class="search-box">
-            <h3>🔍 Buscar Miembro de Discord</h3>
-            <input type="text" id="searchInput" placeholder="Escribe nombre o ID..." oninput="debouncedSearch()">
-            <div id="searchResults" class="results hidden"></div>
-        </div>
-
-        <div id="selectedUser" class="hidden" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-top: 20px;">
-            <h3>Usuario Seleccionado</h3>
-            <div id="userInfo"></div>
-            <div style="margin-top: 15px;">
-                <input type="text" id="platformTwitch" placeholder="Twitch usuario" style="margin: 5px; padding: 8px;">
-                <input type="text" id="platformKick" placeholder="Kick usuario" style="margin: 5px; padding: 8px;">
-                <button class="action" onclick="registerStreamer()">Registrar Streamer</button>
-            </div>
-        </div>
+    <div id="panel">
+        <h2>✅ Conectado correctamente</h2>
+        <button onclick="location.reload()">Salir</button>
     </div>
 
     <script>
-        // Configuración
-        const API_URL = window.location.origin; // Esto detecta automáticamente la URL de Railway
+        const API = window.location.origin; // Detecta Railway automáticamente
         
-        // Estado
-        let authKey = '';
-        let selectedUser = null;
-        let searchTimeout = null;
-
-        // Login
-        async function login() {
-            const key = document.getElementById('adminKey').value.trim();
-            const errorDiv = document.getElementById('loginError');
-            
-            if (!key) {
-                errorDiv.textContent = 'Introduce una clave';
-                return;
-            }
-
-            errorDiv.textContent = 'Conectando...';
-
+        async function doLogin() {
+            const key = document.getElementById('key').value;
             try {
-                console.log('Intentando login en:', `${API_URL}/api/login`);
-                
-                const response = await fetch(`${API_URL}/api/login`, {
+                const res = await fetch(API + '/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ key: key })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({key})
                 });
-
-                console.log('Status:', response.status);
-                const data = await response.json();
-                console.log('Respuesta:', data);
-
-                if (response.ok && data.success) {
-                    authKey = key;
-                    localStorage.setItem('patio_key', key);
-                    document.getElementById('loginOverlay').style.display = 'none';
-                    document.getElementById('app').style.display = 'block';
-                    loadStats();
-                    showMessage('✅ Conectado correctamente');
+                const data = await res.json();
+                if(data.success) {
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('panel').style.display = 'block';
+                    localStorage.setItem('key', key);
                 } else {
-                    errorDiv.textContent = data.error || 'Clave incorrecta';
+                    document.getElementById('error').textContent = 'Clave incorrecta';
                 }
-            } catch (error) {
-                console.error('Error completo:', error);
-                errorDiv.textContent = 'Error de conexión. Ver consola (F12)';
+            } catch(e) {
+                document.getElementById('error').textContent = 'Error: ' + e.message;
             }
         }
-
-        // Test de conexión
-        async function testConnection() {
-            const errorDiv = document.getElementById('loginError');
+        
+        async function testAPI() {
             try {
-                const res = await fetch(`${API_URL}/api/status`);
+                const res = await fetch(API + '/api/status');
                 const data = await res.json();
-                errorDiv.innerHTML = `<span style="color: #00ff88">✅ Backend Online: ${data.bot}</span>`;
-            } catch (e) {
-                errorDiv.innerHTML = `<span style="color: #ff4444">❌ No se puede conectar: ${e.message}</span>`;
+                document.getElementById('test-result').innerHTML = 
+                    '<span style="color: #0f0">✅ Backend OK: ' + data.bot + '</span>';
+            } catch(e) {
+                document.getElementById('test-result').innerHTML = 
+                    '<span style="color: #f00">❌ Error: ' + e.message + '</span>';
             }
         }
-
-        // Cargar stats
-        async function loadStats() {
-            try {
-                const res = await fetch(`${API_URL}/api/stats`, {
-                    headers: { 'x-admin-key': authKey }
-                });
-                const data = await res.json();
-                
-                document.getElementById('stat-streamers').textContent = data.streamers;
-                document.getElementById('stat-live').textContent = data.liveNow;
-                document.getElementById('stat-pending').textContent = data.pending;
-            } catch (e) {
-                console.error('Error cargando stats:', e);
-            }
-        }
-
-        // Búsqueda de usuarios
-        function debouncedSearch() {
-            clearTimeout(searchTimeout);
-            const query = document.getElementById('searchInput').value.trim();
-            if (query.length < 2) {
-                document.getElementById('searchResults').classList.add('hidden');
-                return;
-            }
-            searchTimeout = setTimeout(() => searchUsers(query), 500);
-        }
-
-        async function searchUsers(query) {
-            try {
-                const res = await fetch(`${API_URL}/admin/find-member?q=${encodeURIComponent(query)}`, {
-                    headers: { 'x-admin-key': authKey }
-                });
-                const users = await res.json();
-                
-                const resultsDiv = document.getElementById('searchResults');
-                resultsDiv.innerHTML = users.map(u => `
-                    <div class="user-item" onclick="selectUser('${u.id}', '${u.displayName}', '${u.avatar}')">
-                        <img src="${u.avatar}" alt="">
-                        <div>
-                            <div style="font-weight: bold;">${u.displayName}</div>
-                            <div style="font-size: 12px; color: #666;">${u.username}</div>
-                            ${u.isRegistered ? '<span style="color: #9146FF; font-size: 12px;">Ya registrado</span>' : ''}
-                        </div>
-                    </div>
-                `).join('');
-                
-                resultsDiv.classList.remove('hidden');
-            } catch (e) {
-                console.error('Error buscando:', e);
-            }
-        }
-
-        function selectUser(id, name, avatar) {
-            selectedUser = { id, name, avatar };
-            document.getElementById('selectedUser').classList.remove('hidden');
-            document.getElementById('userInfo').innerHTML = `
-                <img src="${avatar}" style="width: 60px; height: 60px; border-radius: 50%; margin-right: 15px; vertical-align: middle;">
-                <span style="font-size: 18px; font-weight: bold;">${name}</span>
-                <div style="font-size: 12px; color: #666; margin-top: 5px;">ID: ${id}</div>
-            `;
-            document.getElementById('searchResults').classList.add('hidden');
-        }
-
-        async function registerStreamer() {
-            if (!selectedUser) return alert('Selecciona un usuario primero');
-            
-            const platforms = {
-                twitch: document.getElementById('platformTwitch').value.trim(),
-                kick: document.getElementById('platformKick').value.trim()
-            };
-
-            try {
-                const res = await fetch(`${API_URL}/api/direct-register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-key': authKey
-                    },
-                    body: JSON.stringify({
-                        userId: selectedUser.id,
-                        platforms: platforms,
-                        bio: 'Streamer de El Patio RP'
-                    })
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ ' + data.message);
-                    loadStats();
-                } else {
-                    alert('❌ ' + (data.error || 'Error desconocido'));
-                }
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
-        }
-
-        function showMessage(msg) {
-            // Crear toast simple
-            const div = document.createElement('div');
-            div.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #9146FF; color: white; padding: 15px; border-radius: 8px; z-index: 10000;';
-            div.textContent = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-
-        // Auto-login si hay key guardada
-        window.onload = () => {
-            const savedKey = localStorage.getItem('patio_key');
-            if (savedKey) {
-                document.getElementById('adminKey').value = savedKey;
-                login();
-            }
-        };
     </script>
 </body>
 </html>
