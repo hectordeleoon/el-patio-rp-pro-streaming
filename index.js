@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-//            🔥 EL PATIO BOT STREAM v9.2 — ULTRA NOTIFIER COMPLETO
+//            🔥 EL PATIO BOT STREAM v9.4 — FILTRO PATIO RP + @EVERYONE
 // ═══════════════════════════════════════════════════════════════════════════════
 'use strict';
 require('dotenv').config();
@@ -45,6 +45,14 @@ const config = {
     enableTikTok:  process.env.ENABLE_TIKTOK !== 'false',
     enableYouTube: process.env.ENABLE_YOUTUBE === 'true',
   },
+  filters: {
+    // Palabras clave que deben aparecer en el título o juego para considerarse relacionado con El Patio RP
+    keywords: ['patio', 'elpatio', 'el patio', 'patiorp', 'patio rp', 'servidor patio'],
+    // Juegos permitidos (case insensitive)
+    allowedGames: ['gta', 'grand theft auto', 'gta v', 'gta rp', 'fivem', 'red dead redemption', 'rdr2', 'roleplay', 'rp'],
+    // Si está en true, solo notifica si cumple el filtro. Si es false, notifica todo.
+    strictMode: true
+  },
   clips: {
     viralThreshold:      parseInt(process.env.VIRAL_SCORE_AUTO_PUBLISH_THRESHOLD || '70'),
     autoClipIntervalMin: parseInt(process.env.AUTO_CLIP_INTERVAL_MIN || '20'),
@@ -58,7 +66,7 @@ const config = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EXPRESS SERVER SETUP (INICIO INMEDIATO)
+// EXPRESS SERVER SETUP
 // ═══════════════════════════════════════════════════════════════════════════════
 const webApp = express();
 webApp.use(express.json());
@@ -68,10 +76,10 @@ webApp.use(express.static(path.join(__dirname, 'public')));
 // PLATAFORMAS Y DATOS
 // ═══════════════════════════════════════════════════════════════════════════════
 const PLATFORM_CONFIG = {
-  twitch:  { color:0x9146FF, emoji:'🟣', name:'Twitch',  icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png ', watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  urlBase:'https://twitch.tv/ ', thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_ ${u}-1280x720.jpg?t=${Date.now()}` },
-  kick:    { color:0x53FC18, emoji:'🟢', name:'Kick',    icon:'https://kick.com/favicon.ico ', watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    urlBase:'https://kick.com/ ', thumb:()=>null },
-  tiktok:  { color:0xFF0050, emoji:'⚫', name:'TikTok',  icon:'https://www.tiktok.com/favicon.ico ', watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  urlBase:'https://www.tiktok.com/@ ', thumb:()=>null },
-  youtube: { color:0xFF0000, emoji:'🔴', name:'YouTube', icon:'https://www.youtube.com/favicon.ico ', watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', urlBase:'https://youtube.com/@ ', thumb:()=>null },
+  twitch:  { color:0x9146FF, emoji:'🟣', name:'Twitch',  icon:'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c1.png', watchLabel:'Ver en Twitch',  liveLabel:'🔴 EN VIVO EN TWITCH',  urlBase:'https://twitch.tv/', thumb:(u)=>`https://static-cdn.jtvnw.net/previews-ttv/live_user_${u}-1280x720.jpg?t=${Date.now()}` },
+  kick:    { color:0x53FC18, emoji:'🟢', name:'Kick',    icon:'https://kick.com/favicon.ico', watchLabel:'Ver en Kick',    liveLabel:'🔴 EN VIVO EN KICK',    urlBase:'https://kick.com/', thumb:()=>null },
+  tiktok:  { color:0xFF0050, emoji:'⚫', name:'TikTok',  icon:'https://www.tiktok.com/favicon.ico', watchLabel:'Ver en TikTok',  liveLabel:'🔴 EN VIVO EN TIKTOK',  urlBase:'https://www.tiktok.com/@', thumb:()=>null },
+  youtube: { color:0xFF0000, emoji:'🔴', name:'YouTube', icon:'https://www.youtube.com/favicon.ico', watchLabel:'Ver en YouTube', liveLabel:'🔴 EN VIVO EN YOUTUBE', urlBase:'https://youtube.com/@', thumb:()=>null },
 };
 
 const SHOP_ITEMS = [
@@ -220,7 +228,6 @@ console.error= (...a)=>{ const m=a.join(' '); webLogs.push({type:'error',msg:m,t
 // MIDDLEWARES Y RUTAS API
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Auth middlewares
 function requireAdmin(req, res, next) {
   const key = (req.headers['x-admin-key'] || req.query.key || req.body?.key || '').trim();
   if (key === config.adminKey) { req.role = 'admin'; req.userLevel = 3; return next(); }
@@ -233,12 +240,10 @@ function requireAdminOnly(req, res, next) {
   return res.status(403).json({error:'Solo el admin principal puede hacer esto.'});
 }
 
-// Ruta de prueba
 webApp.get('/test', (req, res) => {
   res.json({ message: 'OK', adminKey: config.adminKey, timestamp: new Date().toISOString() });
 });
 
-// Login POST
 webApp.post('/api/login', (req, res) => {
   const key = req.body?.key?.trim();
   if (key === config.adminKey) return res.json({ success: true, role: 'admin' });
@@ -246,7 +251,6 @@ webApp.post('/api/login', (req, res) => {
   res.status(401).json({ success: false, error: 'Clave inválida' });
 });
 
-// Stats para dashboard
 webApp.get('/api/stats', requireAdmin, (req, res) => {
   const totalCoins = [...storage.economy.values()].reduce((a, b) => a + (b.coins || 0), 0);
   res.json({
@@ -260,7 +264,6 @@ webApp.get('/api/stats', requireAdmin, (req, res) => {
   });
 });
 
-// Status público
 webApp.get('/api/status', (req, res) => {
   res.json({
     bot: client.user?.tag || 'Desconectado',
@@ -268,7 +271,7 @@ webApp.get('/api/status', (req, res) => {
     ping: client.ws.ping, 
     uptime: Math.floor(process.uptime()),
     memory: fmtMem(), 
-    version: '9.2',
+    version: '9.4',
     stats: { streamers: storage.streamers.size, liveNow: storage.liveStreams.size },
     config: { enableTwitch: config.notifications.enableTwitch, enableKick: config.notifications.enableKick, enableTikTok: config.notifications.enableTikTok },
   });
@@ -284,36 +287,31 @@ webApp.get('/live', (req,res)=>{
   res.json(list);
 });
 
-// Ruta para buscar miembros
 webApp.get('/admin/find-member', requireAdmin, async (req,res)=>{
   const q=(req.query.q||'').toLowerCase().trim();
-  if (!q) return res.json([]);
+  if (!q || q.length < 2) return res.status(400).json({error:'Mínimo 2 caracteres'});
   
   try {
     const guild=client.guilds.cache.get(config.discord.guildId);
     if (!guild) return res.status(500).json({error:'Bot no conectado al servidor'});
     
-    let members;
-    try {
-      members = await guild.members.fetch({query: q, limit: 10});
-      if (members.size === 0) {
-        members = guild.members.cache.filter(m => 
-          (m.displayName?.toLowerCase().includes(q)) || 
-          (m.user?.username?.toLowerCase().includes(q)) ||
-          (m.id === q)
-        ).first(10);
-      }
-    } catch(e) {
-      members = guild.members.cache.filter(m => 
+    let members = guild.members.cache.filter(m => 
+      !m.user.bot && (
         (m.displayName?.toLowerCase().includes(q)) || 
         (m.user?.username?.toLowerCase().includes(q)) ||
         (m.id === q)
-      ).first(10);
+      )
+    ).first(10);
+
+    if (members.size === 0 && /^\d+$/.test(q)) {
+      try {
+        const member = await guild.members.fetch(q).catch(() => null);
+        if (member && !member.user.bot) members = [member];
+      } catch(e) {}
     }
     
     const results=[];
-    for (const [id,m] of members.entries ? members.entries() : Object.entries(members)) {
-      if (results.length>=10) break;
+    for (const m of members.values()) {
       results.push({ 
         id: m.id, 
         displayName: m.displayName || m.user?.username || 'Unknown', 
@@ -324,10 +322,126 @@ webApp.get('/admin/find-member', requireAdmin, async (req,res)=>{
       });
     }
     res.json(results);
-  } catch(e) { res.status(500).json({error:e.message}); }
+  } catch(e) { 
+    console.error('Error en find-member:', e);
+    res.status(500).json({error:e.message}); 
+  }
 });
 
-// Rutas protegidas
+webApp.post('/api/direct-register', requireAdmin, async (req, res) => {
+  try {
+    const { userId, platforms, bio, color } = req.body;
+    
+    if (!userId || !platforms) {
+      return res.status(400).json({ error: 'Faltan datos requeridos (userId, platforms)' });
+    }
+    
+    if (storage.streamers.has(userId)) {
+      return res.status(400).json({ error: 'Este usuario ya está registrado como streamer' });
+    }
+    
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (!guild) return res.status(500).json({ error: 'Bot no conectado al servidor' });
+    
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return res.status(404).json({ error: 'Usuario no encontrado en el servidor' });
+    if (member.user.bot) return res.status(400).json({ error: 'No se pueden registrar bots' });
+    
+    const validPlatforms = {};
+    for (const [key, value] of Object.entries(platforms)) {
+      if (value && value.trim()) {
+        validPlatforms[key] = extractUsername(key, value);
+      }
+    }
+    
+    if (Object.keys(validPlatforms).length === 0) {
+      return res.status(400).json({ error: 'Debe tener al menos una plataforma válida' });
+    }
+    
+    const thread = await createStreamerThread(
+      member, 
+      validPlatforms, 
+      bio || 'Streamer de El Patio RP', 
+      color || '#9146FF'
+    );
+    
+    saveStorage();
+    
+    res.json({ 
+      success: true, 
+      message: 'Streamer registrado correctamente',
+      threadId: thread.id,
+      displayName: member.displayName 
+    });
+    
+  } catch(e) {
+    console.error('Error en direct-register:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+webApp.put('/api/streamer/:uid', requireAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { platforms, bio, color } = req.body;
+    
+    if (!storage.streamers.has(uid)) {
+      return res.status(404).json({ error: 'Streamer no encontrado' });
+    }
+    
+    const streamerData = storage.streamers.get(uid);
+    
+    if (platforms) {
+      const validPlatforms = {};
+      for (const [key, value] of Object.entries(platforms)) {
+        if (value && value.trim()) {
+          validPlatforms[key] = extractUsername(key, value);
+        }
+      }
+      streamerData.platforms = validPlatforms;
+    }
+    
+    if (bio) streamerData.bio = bio;
+    if (color) streamerData.color = color;
+    
+    storage.streamers.set(uid, streamerData);
+    saveStorage();
+    
+    if (streamerData.threadId) {
+      try {
+        const guild = client.guilds.cache.get(config.discord.guildId);
+        const thread = await guild.channels.fetch(streamerData.threadId).catch(() => null);
+        if (thread) {
+          const member = await guild.members.fetch(uid).catch(() => null);
+          if (member) {
+            const embed = new EmbedBuilder()
+              .setColor(streamerData.color || '#9146FF')
+              .setTitle(`🎮 ${member.displayName}`)
+              .setThumbnail(member.user.displayAvatarURL({forceStatic:false,size:256}))
+              .setDescription(streamerData.bio || '*Streamer de El Patio RP*');
+            
+            let platText='';
+            if (streamerData.platforms?.twitch) platText+=`🟣 **Twitch:** [${streamerData.platforms.twitch}](https://twitch.tv/${streamerData.platforms.twitch})\n`;
+            if (streamerData.platforms?.kick) platText+=`🟢 **Kick:** [${streamerData.platforms.kick}](https://kick.com/${streamerData.platforms.kick})\n`;
+            if (streamerData.platforms?.tiktok) platText+=`⚫ **TikTok:** [@${streamerData.platforms.tiktok}](https://tiktok.com/@${streamerData.platforms.tiktok})\n`;
+            if (platText) embed.addFields({name:'📺 Plataformas',value:platText});
+            
+            const starterMessage = await thread.fetchStarterMessage().catch(() => null);
+            if (starterMessage) await starterMessage.edit({ embeds: [embed] });
+          }
+        }
+      } catch(e) {
+        console.error('Error actualizando hilo:', e);
+      }
+    }
+    
+    res.json({ success: true, message: 'Streamer actualizado' });
+    
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 webApp.get('/api/clips', requireAdmin, (req,res)=>{
   const all=[];
   for (const [uid,clips] of storage.clips.entries()) clips.forEach(c=>all.push({...c,streamerId:uid}));
@@ -493,7 +607,15 @@ webApp.post('/api/config', requireAdminOnly, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Health check
+webApp.post('/api/check-now', requireAdmin, async (req, res) => {
+  try {
+    await checkAllStreams();
+    res.json({ ok: true, message: 'Verificación completada', liveNow: storage.liveStreams.size });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 webApp.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -504,13 +626,12 @@ webApp.get('/health', (req, res) => {
   });
 });
 
-// RUTA CATCH-ALL - Para SPA
 webApp.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INICIAR SERVIDOR HTTP (INMEDIATAMENTE)
+// INICIAR SERVIDOR HTTP
 // ═══════════════════════════════════════════════════════════════════════════════
 webApp.listen(config.port, '0.0.0.0', () => {
   console.log(`🌐 Dashboard activo en puerto ${config.port}`);
@@ -518,16 +639,15 @@ webApp.listen(config.port, '0.0.0.0', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RESTO DEL CÓDIGO DEL BOT (SIN CAMBIOS)
+// BOT FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// TWITCH TOKEN
 let twitchToken=null, twitchTokenExpiry=0;
 async function getTwitchToken() {
   if (!config.twitch.clientId||config.twitch.clientId==='tu_twitch_client_id') return null;
   if (twitchToken && Date.now()<twitchTokenExpiry) return twitchToken;
   try {
-    const r = await axios.post('https://id.twitch.tv/oauth2/token ',null,{
+    const r = await axios.post('https://id.twitch.tv/oauth2/token',null,{
       params:{ client_id:config.twitch.clientId, client_secret:config.twitch.clientSecret, grant_type:'client_credentials' },
       timeout:10000,
     });
@@ -538,7 +658,6 @@ async function getTwitchToken() {
   } catch(e) { logError('TwitchToken',e); return null; }
 }
 
-// EXTRACCIÓN DE USERNAME - CORREGIDO
 function extractUsername(platform, input) {
   if (!input) return null;
   const s = String(input).trim();
@@ -570,7 +689,6 @@ function extractUsername(platform, input) {
           .pop()?.trim() || s;
 }
 
-// VERIFICACIÓN DE PLATAFORMAS
 async function verifyPlatformUser(platform, rawInput) {
   const username = extractUsername(platform, rawInput);
   if (!username||username.length<1) return { exists:false, error:'Usuario vacío o URL inválida' };
@@ -580,7 +698,7 @@ async function verifyPlatformUser(platform, rawInput) {
     if (platform === 'twitch') {
       const token = await getTwitchToken();
       if (!token) return { exists:false, error:'Sin credenciales Twitch' };
-      const r = await axios.get('https://api.twitch.tv/helix/users ',{
+      const r = await axios.get('https://api.twitch.tv/helix/users',{
         headers:{ 'Client-ID':config.twitch.clientId, 'Authorization':`Bearer ${token}` },
         params:{ login:clean }, timeout:8000,
       });
@@ -590,7 +708,7 @@ async function verifyPlatformUser(platform, rawInput) {
     }
 
     if (platform === 'kick') {
-      const r = await axios.get(`https://kick.com/api/v2/channels/ ${clean}`,{
+      const r = await axios.get(`https://kick.com/api/v2/channels/${clean}`,{
         timeout:8000, headers:{ 'User-Agent':'Mozilla/5.0','Accept':'application/json' },
       });
       const d = r.data?.data || r.data;
@@ -600,7 +718,7 @@ async function verifyPlatformUser(platform, rawInput) {
 
     if (platform === 'tiktok') {
       try {
-        const r = await axios.get(`https://www.tiktok.com/@ ${clean}`,{
+        const r = await axios.get(`https://www.tiktok.com/@${clean}`,{
           timeout:15000,
           headers:{ 
             'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -636,7 +754,7 @@ async function verifyPlatformUser(platform, rawInput) {
       const handle = clean.startsWith('@')?clean.slice(1):clean;
       if (config.youtube.apiKey && config.youtube.apiKey !== 'tu_youtube_api_key') {
         try {
-          const r = await axios.get('https://www.googleapis.com/youtube/v3/channels ',{
+          const r = await axios.get('https://www.googleapis.com/youtube/v3/channels',{
             params:{ part:'snippet,statistics', forHandle:handle, key:config.youtube.apiKey }, timeout:8000,
           });
           const ch = r.data?.items?.[0];
@@ -646,7 +764,7 @@ async function verifyPlatformUser(platform, rawInput) {
         } catch(e) { }
       }
       try {
-        const r = await axios.get(`https://www.youtube.com/@ ${handle}`,{timeout:10000,headers:{'User-Agent':'Mozilla/5.0'}});
+        const r = await axios.get(`https://www.youtube.com/@${handle}`,{timeout:10000,headers:{'User-Agent':'Mozilla/5.0'}});
         if (r.status===404) return { exists:false, error:`${username} no existe en YouTube` };
         return { exists:true, displayName:handle, resolvedUsername:handle, warning:'Verificación básica', method:'YouTube Scraping' };
       } catch(e) {
@@ -661,12 +779,11 @@ async function verifyPlatformUser(platform, rawInput) {
   }
 }
 
-// DETECTORES DE STREAM
 async function checkTwitchStream(username, retries=0) {
   const token = await getTwitchToken();
   if (!token) return null;
   try {
-    const r = await axios.get('https://api.twitch.tv/helix/streams ',{
+    const r = await axios.get('https://api.twitch.tv/helix/streams',{
       headers:{ 'Client-ID':config.twitch.clientId, 'Authorization':`Bearer ${token}` },
       params:{ user_login:username.toLowerCase() }, timeout:10000,
     });
@@ -674,7 +791,7 @@ async function checkTwitchStream(username, retries=0) {
     const s = r.data.data[0];
     return { isLive:true, title:s.title||'Sin título', game:s.game_name||'Sin categoría', viewers:s.viewer_count||0,
       thumbnailUrl:s.thumbnail_url?.replace('{width}','1280').replace('{height}','720')+`?t=${Date.now()}`,
-      startedAt:new Date(s.started_at), streamUrl:`https://twitch.tv/ ${username}`, platform:'twitch' };
+      startedAt:new Date(s.started_at), streamUrl:`https://twitch.tv/${username}`, platform:'twitch' };
   } catch(e) {
     if (retries<config.notifications.retryAttempts) { await new Promise(r=>setTimeout(r,config.notifications.retryDelay)); return checkTwitchStream(username,retries+1); }
     return null;
@@ -683,14 +800,14 @@ async function checkTwitchStream(username, retries=0) {
 
 async function checkKickStream(username, retries=0) {
   try {
-    const r = await axios.get(`https://kick.com/api/v2/channels/ ${username}/livestream`,{
+    const r = await axios.get(`https://kick.com/api/v2/channels/${username}/livestream`,{
       timeout:10000, headers:{ 'User-Agent':'Mozilla/5.0','Accept':'application/json' },
     });
     if (!r.data?.data?.id && !r.data?.id) return null;
     const d = r.data.data||r.data;
     return { isLive:true, title:d.session_title||d.title||'Sin título', game:d.categories?.[0]?.name||'Sin categoría',
       viewers:d.viewer_count||d.viewers_count||0, thumbnailUrl:d.thumbnail?.url||null,
-      startedAt:new Date(d.created_at||Date.now()), streamUrl:`https://kick.com/ ${username}`, platform:'kick' };
+      startedAt:new Date(d.created_at||Date.now()), streamUrl:`https://kick.com/${username}`, platform:'kick' };
   } catch(e) {
     if (retries<config.notifications.retryAttempts) { await new Promise(r=>setTimeout(r,config.notifications.retryDelay)); return checkKickStream(username,retries+1); }
     return null;
@@ -700,9 +817,9 @@ async function checkKickStream(username, retries=0) {
 async function checkTikTokLive(username) {
   const clean = username.replace('@','').trim();
   try {
-    const r = await axios.get(`https://www.tiktok.com/@ ${clean}/live`,{
+    const r = await axios.get(`https://www.tiktok.com/@${clean}/live`,{
       timeout:15000,
-      headers:{ 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36','Accept':'text/html','Referer':'https://www.tiktok.com/ ' },
+      headers:{ 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36','Accept':'text/html','Referer':'https://www.tiktok.com/' },
     });
     const html = r.data||'';
     const isLive = ['"isLiving":true','"liveStatus":1','"status":2','"roomStatus":2','"living":true'].some(s=>html.includes(s));
@@ -711,7 +828,7 @@ async function checkTikTokLive(username) {
     const tM = html.match(/"title":"([^"]{5,100})"/) || html.match(/"live_title":"([^"]{5,100})"/);
     return { isLive:true, title:tM?tM[1].replace(/\\u0026/g,'&'):`${clean} está en vivo en TikTok!`,
       game:'TikTok Live', viewers:vM?parseInt(vM[1]):0, thumbnailUrl:null,
-      startedAt:new Date(), streamUrl:`https://www.tiktok.com/@ ${clean}/live`, platform:'tiktok' };
+      startedAt:new Date(), streamUrl:`https://www.tiktok.com/@${clean}/live`, platform:'tiktok' };
   } catch { return null; }
 }
 
@@ -719,19 +836,19 @@ async function checkYouTubeLive(channelHandle) {
   if (!config.youtube.apiKey||config.youtube.apiKey==='tu_youtube_api_key') return null;
   try {
     const h = channelHandle.replace('@','').trim();
-    const sr = await axios.get('https://www.googleapis.com/youtube/v3/search ',{
+    const sr = await axios.get('https://www.googleapis.com/youtube/v3/search',{
       params:{ part:'snippet', q:h, type:'channel', key:config.youtube.apiKey, maxResults:1 }, timeout:10000,
     });
     if (!sr.data.items?.length) return null;
     const cid = sr.data.items[0].id.channelId;
-    const lr  = await axios.get('https://www.googleapis.com/youtube/v3/search ',{
+    const lr  = await axios.get('https://www.googleapis.com/youtube/v3/search',{
       params:{ part:'snippet', channelId:cid, eventType:'live', type:'video', key:config.youtube.apiKey, maxResults:1 }, timeout:10000,
     });
     if (!lr.data.items?.length) return null;
     const live = lr.data.items[0];
     return { isLive:true, title:live.snippet.title, game:'YouTube Live', viewers:0,
       thumbnailUrl:live.snippet.thumbnails?.high?.url||null,
-      startedAt:new Date(live.snippet.publishedAt), streamUrl:`https://youtube.com/watch?v= ${live.id.videoId}`, platform:'youtube' };
+      startedAt:new Date(live.snippet.publishedAt), streamUrl:`https://youtube.com/watch?v=${live.id.videoId}`, platform:'youtube' };
   } catch { return null; }
 }
 
@@ -745,11 +862,31 @@ async function getStreamData(platform, username) {
   }
 }
 
-// IA GROQ
+// ✅ NUEVA FUNCIÓN: Verificar si el contenido está relacionado con El Patio RP
+function isRelatedToPatioRP(streamData) {
+  // Si el modo estricto está desactivado, permitir todo
+  if (!config.filters.strictMode) return true;
+  
+  const title = (streamData.title || '').toLowerCase();
+  const game = (streamData.game || '').toLowerCase();
+  
+  // Verificar juegos permitidos
+  const isAllowedGame = config.filters.allowedGames.some(g => game.includes(g.toLowerCase()));
+  if (isAllowedGame) return true;
+  
+  // Verificar palabras clave en el título
+  const hasKeyword = config.filters.keywords.some(k => title.includes(k.toLowerCase()));
+  if (hasKeyword) return true;
+  
+  // Si no cumple ninguna condición, no está relacionado
+  console.log(`🚫 Filtro aplicado: "${title}" no está relacionado con El Patio RP`);
+  return false;
+}
+
 async function askGroqAI(userPrompt, systemPrompt='Eres el asistente de El Patio RP. Responde en español.') {
   if (!config.groq.apiKey||config.groq.apiKey==='gsk_tu_groq_api_key') return null;
   try {
-    const r = await axios.post('https://api.groq.com/openai/v1/chat/completions ',
+    const r = await axios.post('https://api.groq.com/openai/v1/chat/completions',
       { model:config.groq.model, max_tokens:500, messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}] },
       { headers:{ Authorization:`Bearer ${config.groq.apiKey}`,'Content-Type':'application/json' }, timeout:15000 }
     );
@@ -768,7 +905,6 @@ async function analyzeClipWithAI(streamData, streamerName, platform) {
   } catch { return null; }
 }
 
-// VALIDAR STREAMER EN EL SERVIDOR
 async function validateStreamerInGuild(userId) {
   try {
     const guild  = client.guilds.cache.get(config.discord.guildId);
@@ -788,7 +924,6 @@ async function validateStreamerInGuild(userId) {
   } catch(e) { return false; }
 }
 
-// ANTI-SPAM
 function canNotify(streamKey) {
   const last = storage.notifiedStreams.get(streamKey);
   if (!last) return true;
@@ -800,9 +935,15 @@ function markNotified(streamKey) {
   for (const [k,t] of storage.notifiedStreams.entries()) { if (t<cutoff) storage.notifiedStreams.delete(k); }
 }
 
-// ENVIAR NOTIFICACIÓN DE LIVE
+// ✅ CORREGIDO: Notificación CON @everyone y validación de contenido Patio RP
 async function sendLiveNotification(platform, member, username, streamData, streamerData) {
   try {
+    // Validación de contenido relacionado con El Patio RP (CORRECCIÓN #2)
+    if (!isRelatedToPatioRP(streamData)) {
+      console.log(`🚫 Notificación bloqueada: Contenido no relacionado con El Patio RP - ${streamData.title}`);
+      return;
+    }
+    
     const valid = await validateStreamerInGuild(member.id);
     if (!valid) {
       console.log(`🚫 Notificación bloqueada: ${member.displayName} no válido en El Patio RP`);
@@ -838,27 +979,33 @@ async function sendLiveNotification(platform, member, username, streamData, stre
 
     const mainBtn   = new ButtonBuilder().setLabel(`${p.emoji} ${p.watchLabel}`).setStyle(ButtonStyle.Link).setURL(streamUrl);
     const extraBtns = [];
-    if (platform!=='twitch'  && plats.twitch)    extraBtns.push(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/ ${plats.twitch}`));
-    if (platform!=='kick'    && plats.kick)      extraBtns.push(new ButtonBuilder().setLabel('🟢 Kick').setStyle(ButtonStyle.Link).setURL(`https://kick.com/ ${plats.kick}`));
-    if (platform!=='tiktok'  && plats.tiktok)    extraBtns.push(new ButtonBuilder().setLabel('⚫ TikTok').setStyle(ButtonStyle.Link).setURL(`https://www.tiktok.com/@ ${plats.tiktok}`));
-    if (platform!=='youtube' && plats.youtube)   extraBtns.push(new ButtonBuilder().setLabel('🔴 YouTube').setStyle(ButtonStyle.Link).setURL(`https://youtube.com/@ ${plats.youtube}`));
+    if (platform!=='twitch'  && plats.twitch)    extraBtns.push(new ButtonBuilder().setLabel('🟣 Twitch').setStyle(ButtonStyle.Link).setURL(`https://twitch.tv/${plats.twitch}`));
+    if (platform!=='kick'    && plats.kick)      extraBtns.push(new ButtonBuilder().setLabel('🟢 Kick').setStyle(ButtonStyle.Link).setURL(`https://kick.com/${plats.kick}`));
+    if (platform!=='tiktok'  && plats.tiktok)    extraBtns.push(new ButtonBuilder().setLabel('⚫ TikTok').setStyle(ButtonStyle.Link).setURL(`https://www.tiktok.com/@${plats.tiktok}`));
+    if (platform!=='youtube' && plats.youtube)   extraBtns.push(new ButtonBuilder().setLabel('🔴 YouTube').setStyle(ButtonStyle.Link).setURL(`https://youtube.com/@${plats.youtube}`));
 
     const components=[new ActionRowBuilder().addComponents(mainBtn)];
     if (extraBtns.length) components.push(new ActionRowBuilder().addComponents(...extraBtns.slice(0,4)));
 
-    const mention = config.discord.streamerRoleId ? `<@&${config.discord.streamerRoleId}>` : '@everyone';
-    await channel.send({ content:`${mention} ¡**${member.displayName}** está en vivo en **${p.name}**! ${p.emoji}`, embeds:[embed], components });
+    // ✅ CORRECCIÓN #1: Mensaje CON @everyone y mención al rol si existe
+    const mentionRole = config.discord.streamerRoleId ? `<@&${config.discord.streamerRoleId}>` : '';
+    const messageContent = `@everyone ${mentionRole} ¡**${member.displayName}** está en vivo en **${p.name}**! ${p.emoji}`;
+    
+    await channel.send({ 
+      content: messageContent, 
+      embeds:[embed], 
+      components 
+    });
 
     const threadId = storage.threads.get(member.id);
     if (threadId) {
       const thread = guild.channels.cache.get(threadId);
       if (thread) await thread.send({ content:`🔴 ¡Estoy en vivo en ${p.name}!`, embeds:[embed] }).catch(()=>{});
     }
-    console.log(`✅ Notificación enviada: ${member.displayName} en ${platform}`);
+    console.log(`✅ Notificación enviada: ${member.displayName} en ${platform} | Juego: ${streamData.game} | Título: ${streamData.title}`);
   } catch(e) { logError('sendLiveNotification', e); }
 }
 
-// RECOMPENSAS
 async function checkAndGrantRewards(userId) {
   const streamerData = storage.streamers.get(userId);
   if (!streamerData) return;
@@ -887,7 +1034,6 @@ async function checkAndGrantRewards(userId) {
   saveStorage();
 }
 
-// CREAR HILO DE FORO + ASIGNAR ROL AUTOMÁTICO
 async function createStreamerThread(member, platforms, bio, color) {
   const guild        = client.guilds.cache.get(config.discord.guildId);
   const forumChannel = guild?.channels.cache.get(config.discord.forumChannelId);
@@ -907,11 +1053,11 @@ async function createStreamerThread(member, platforms, bio, color) {
     .setDescription(bio||'*Streamer de El Patio RP*');
 
   let platText='';
-  if (platforms?.twitch)    platText+=`🟣 **Twitch:** [${platforms.twitch}](https://twitch.tv/ ${platforms.twitch})\n`;
-  if (platforms?.kick)      platText+=`🟢 **Kick:** [${platforms.kick}](https://kick.com/ ${platforms.kick})\n`;
-  if (platforms?.tiktok)    platText+=`⚫ **TikTok:** [@${platforms.tiktok}](https://tiktok.com/@ ${platforms.tiktok})\n`;
-  if (platforms?.youtube)   platText+=`🔴 **YouTube:** [${platforms.youtube}](https://youtube.com/@ ${platforms.youtube})\n`;
-  if (platforms?.instagram) platText+=`📸 **Instagram:** [@${platforms.instagram}](https://instagram.com/ ${platforms.instagram})\n`;
+  if (platforms?.twitch)    platText+=`🟣 **Twitch:** [${platforms.twitch}](https://twitch.tv/${platforms.twitch})\n`;
+  if (platforms?.kick)      platText+=`🟢 **Kick:** [${platforms.kick}](https://kick.com/${platforms.kick})\n`;
+  if (platforms?.tiktok)    platText+=`⚫ **TikTok:** [@${platforms.tiktok}](https://tiktok.com/@${platforms.tiktok})\n`;
+  if (platforms?.youtube)   platText+=`🔴 **YouTube:** [${platforms.youtube}](https://youtube.com/@${platforms.youtube})\n`;
+  if (platforms?.instagram) platText+=`📸 **Instagram:** [@${platforms.instagram}](https://instagram.com/${platforms.instagram})\n`;
   if (platText) embed.addFields({name:'📺 Plataformas',value:platText});
   embed.addFields(
     {name:'👤 Miembro desde',value:`<t:${Math.floor((member.joinedTimestamp||Date.now())/1000)}:R>`,inline:true},
@@ -944,7 +1090,6 @@ async function createStreamerThread(member, platforms, bio, color) {
   return thread;
 }
 
-// LOOP PRINCIPAL DE VERIFICACIÓN
 async function checkAndNotify(platform, userId, username, member, streamerData) {
   const streamKey = `${platform}-${userId}`;
   const wasLive   = storage.liveStreams.has(streamKey);
@@ -991,7 +1136,7 @@ async function checkAndNotify(platform, userId, username, member, streamerData) 
     return true;
   }
 
-  console.log(`🔴 ${member.displayName} EN VIVO en ${platform}!`);
+  console.log(`🔴 ${member.displayName} EN VIVO en ${platform}! Título: ${streamData.title} | Juego: ${streamData.game}`);
   
   const isValidMember = await validateStreamerInGuild(userId);
   if (!isValidMember) {
@@ -1004,6 +1149,8 @@ async function checkAndNotify(platform, userId, username, member, streamerData) 
     if (aiContent) streamData.aiContent=aiContent;
   }
   storage.liveStreams.set(streamKey,{startedAt:new Date().toISOString(),currentViewers:streamData.viewers,viewers:streamData.viewers,peakViewers:streamData.viewers,platform,title:streamData.title,silent:false});
+  
+  // Intentar enviar notificación (si pasa el filtro de contenido)
   await sendLiveNotification(platform,member,username,streamData,streamerData);
   markNotified(streamKey);
 
@@ -1042,7 +1189,6 @@ async function checkAllStreams() {
   console.log(`✅ En vivo activos: ${storage.liveStreams.size}`);
 }
 
-// SLASH COMMANDS
 const commands = [
   new SlashCommandBuilder().setName('ping').setDescription('Verifica latencia del bot'),
   new SlashCommandBuilder().setName('live').setDescription('Ver quién está en vivo ahora'),
@@ -1113,7 +1259,6 @@ async function registerCommands() {
   } catch(e) { console.error('❌ Error registrando comandos:',e.message); }
 }
 
-// INTERACTIONS
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   const { commandName } = interaction;
@@ -1225,7 +1370,6 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// Botones para aprobar/rechazar
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
   const cid = interaction.customId;
@@ -1259,24 +1403,22 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BOT EVENTS Y LOGIN (DESPUÉS DEL SERVIDOR)
-// ═══════════════════════════════════════════════════════════════════════════════
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   console.log(`🤖 ${client.user.tag} listo!`);
-  console.log(`📊 Versión: 9.2 Ultra Notifier`);
+  console.log(`📊 Versión: 9.4 Filtro Patio RP + @everyone`);
   
   loadStorage();
   await registerCommands();
   
   setInterval(checkAllStreams, config.notifications.checkInterval);
   console.log(`🔄 Verificación cada ${config.notifications.checkInterval/1000}s`);
+  console.log(`📝 Filtro El Patio RP: ${config.filters.strictMode ? 'ACTIVO' : 'INACTIVO'}`);
+  console.log(`🎮 Juegos permitidos: ${config.filters.allowedGames.join(', ')}`);
 });
 
 client.on('error', (e) => logError('Discord Client', e));
 client.on('warn', (w) => console.warn('⚠️ Discord:', w));
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n👋 Cerrando bot...');
   saveStorage();
@@ -1291,7 +1433,6 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// Login
 client.login(config.discord.token).catch(e => {
   console.error('❌ Error login:', e.message);
   process.exit(1);
