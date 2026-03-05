@@ -287,44 +287,122 @@ webApp.get('/live', (req,res)=>{
   res.json(list);
 });
 
-webApp.get('/admin/find-member', requireAdmin, async (req,res)=>{
-  const q=(req.query.q||'').toLowerCase().trim();
-  if (!q || q.length < 2) return res.status(400).json({error:'Mínimo 2 caracteres'});
+webApp.get('/admin/find-member', requireAdmin, async (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q || q.length < 2) return res.status(400).json({ error: 'Mínimo 2 caracteres' });
   
   try {
-    const guild=client.guilds.cache.get(config.discord.guildId);
-    if (!guild) return res.status(500).json({error:'Bot no conectado al servidor'});
-    
-    let members = guild.members.cache.filter(m => 
-      !m.user.bot && (
-        (m.displayName?.toLowerCase().includes(q)) || 
-        (m.user?.username?.toLowerCase().includes(q)) ||
-        (m.id === q)
-      )
-    ).first(10);
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (!guild) {
+      console.error('❌ Guild no encontrado:', config.discord.guildId);
+      return res.status(500).json({ error: 'Bot no conectado al servidor' });
+    }
 
-    if (members.size === 0 && /^\d+$/.test(q)) {
-      try {
-        const member = await guild.members.fetch(q).catch(() => null);
-        if (member && !member.user.bot) members = [member];
-      } catch(e) {}
-    }
+    console.log(`🔍 Buscando miembros con query: "${q}" en guild: ${guild.name}`);
     
-    const results=[];
-    for (const m of members.values()) {
-      results.push({ 
-        id: m.id, 
-        displayName: m.displayName || m.user?.username || 'Unknown', 
-        username: m.user?.username || 'unknown', 
-        avatar: m.user?.displayAvatarURL({size:64}) || '', 
-        isRegistered: storage.streamers.has(m.id), 
-        hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false 
-      });
+    let results = [];
+    
+    // MÉTODO 1: Buscar en caché local primero (más rápido)
+    const cachedMembers = guild.members.cache.filter(m => {
+      if (m.user.bot) return false;
+      const displayName = (m.displayName || '').toLowerCase();
+      const username = (m.user.username || '').toLowerCase();
+      const globalName = (m.user.globalName || '').toLowerCase();
+      const id = m.id;
+      
+      return displayName.includes(q) || 
+             username.includes(q) || 
+             globalName.includes(q) ||
+             id === q;
+    }).first(20);
+    
+    results = cachedMembers.map(m => ({
+      id: m.id,
+      displayName: m.displayName || m.user.username || 'Unknown',
+      username: m.user.username || 'unknown',
+      avatar: m.user.displayAvatarURL({ size: 64 }) || '',
+      isRegistered: storage.streamers.has(m.id),
+      hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false
+    }));
+
+    // MÉTODO 2: Si no hay resultados en caché y es un ID exacto, intentar fetch individual
+    if (results.length === 0 && /^\d{17,20}$/.test(q)) {
+      try {
+        console.log(`🔍 Intentando fetch por ID: ${q}`);
+        const member = await guild.members.fetch(q).catch(() => null);
+        if (member && !member.user.bot) {
+          results.push({
+            id: member.id,
+            displayName: member.displayName || member.user.username,
+            username: member.user.username,
+            avatar: member.user.displayAvatarURL({ size: 64 }),
+            isRegistered: storage.streamers.has(member.id),
+            hasStreamerRole: config.discord.streamerRoleId ? member.roles?.cache.has(config.discord.streamerRoleId) : false
+          });
+        }
+      } catch (e) {
+        console.log('❌ No se pudo fetchear por ID:', e.message);
+      }
     }
+
+    // MÉTODO 3: Si aún no hay resultados, intentar búsqueda API de Discord (solo funciona en servidores <1000 miembros o con privilegios)
+    if (results.length === 0) {
+      try {
+        console.log(`🔍 Intentando búsqueda API de Discord...`);
+        // Esto solo funciona si el bot tiene privilegios y el servidor no es gigante
+        const fetchedMembers = await guild.members.fetch({ 
+          query: q, 
+          limit: 10,
+          cache: true 
+        });
+        
+        if (fetchedMembers && fetchedMembers.size > 0) {
+          results = fetchedMembers.filter(m => !m.user.bot).map(m => ({
+            id: m.id,
+            displayName: m.displayName || m.user.username,
+            username: m.user.username,
+            avatar: m.user.displayAvatarURL({ size: 64 }),
+            isRegistered: storage.streamers.has(m.id),
+            hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false
+          }));
+        }
+      } catch (e) {
+        console.log('⚠️ Búsqueda API falló (normal en servidores grandes):', e.message);
+        // No es un error crítico, simplemente no hay resultados adicionales
+      }
+    }
+
+    console.log(`✅ Encontrados ${results.length} resultados`);
     res.json(results);
-  } catch(e) { 
-    console.error('Error en find-member:', e);
-    res.status(500).json({error:e.message}); 
+    
+  } catch (e) { 
+    console.error('❌ Error en find-member:', e);
+    res.status(500).json({ error: e.message }); 
+  }
+});
+
+// NUEVO: Endpoint para listar miembros recientes (alternativa si la búsqueda falla)
+webApp.get('/admin/members-list', requireAdmin, async (req, res) => {
+  try {
+    const guild = client.guilds.cache.get(config.discord.guildId);
+    if (!guild) return res.status(500).json({ error: 'Bot no conectado' });
+    
+    // Obtener miembros del caché (los que han interactuado recientemente)
+    const members = guild.members.cache
+      .filter(m => !m.user.bot)
+      .first(100)
+      .map(m => ({
+        id: m.id,
+        displayName: m.displayName || m.user.username,
+        username: m.user.username,
+        avatar: m.user.displayAvatarURL({ size: 64 }),
+        isRegistered: storage.streamers.has(m.id),
+        hasStreamerRole: config.discord.streamerRoleId ? m.roles?.cache.has(config.discord.streamerRoleId) : false
+      }));
+    
+    res.json(members);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
