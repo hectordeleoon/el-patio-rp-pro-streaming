@@ -8,58 +8,116 @@
         #login { max-width: 400px; margin: 0 auto; text-align: center; }
         #panel { display: none; }
         .error { color: #ff4444; margin-top: 10px; }
+        .loading { opacity: 0.6; pointer-events: none; }
     </style>
 </head>
 <body>
     <div id="login">
         <h1>🎮 El Patio RP</h1>
-        <input type="password" id="key" placeholder="Clave admin"><br>
-        <button onclick="doLogin()">Entrar</button>
+        <input type="password" id="key" placeholder="Clave admin" autocomplete="off"><br>
+        <button onclick="doLogin()" id="btn-login">Entrar</button>
         <div id="error" class="error"></div>
-        <br><br>
-        <button onclick="testAPI()" style="font-size: 12px; opacity: 0.5;">Test API</button>
-        <div id="test-result"></div>
     </div>
 
     <div id="panel">
         <h2>✅ Conectado correctamente</h2>
-        <button onclick="location.reload()">Salir</button>
+        <div id="panel-content"></div>
+        <button onclick="doLogout()">Salir</button>
     </div>
 
     <script>
-        const API = window.location.origin; // Detecta Railway automáticamente
-        
+        const API = window.location.origin;
+        let sessionToken = null;
+
+        // Verificar sesión al cargar
+        window.onload = () => {
+            const saved = sessionStorage.getItem('admin_token');
+            if(saved) verifySession(saved);
+        };
+
         async function doLogin() {
+            const btn = document.getElementById('btn-login');
             const key = document.getElementById('key').value;
+            
+            if(!key) return;
+            
+            btn.classList.add('loading');
+            btn.textContent = 'Verificando...';
+            
             try {
-                const res = await fetch(API + '/api/login', {
+                const res = await fetch(`${API}/api/login`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({key})
                 });
+                
+                if(!res.ok) throw new Error('Error de conexión');
+                
                 const data = await res.json();
-                if(data.success) {
-                    document.getElementById('login').style.display = 'none';
-                    document.getElementById('panel').style.display = 'block';
-                    localStorage.setItem('key', key);
+                
+                if(data.success && data.token) {
+                    sessionToken = data.token;
+                    sessionStorage.setItem('admin_token', data.token); // Mejor que localStorage
+                    showPanel();
                 } else {
-                    document.getElementById('error').textContent = 'Clave incorrecta';
+                    showError('Clave incorrecta');
                 }
             } catch(e) {
-                document.getElementById('error').textContent = 'Error: ' + e.message;
+                showError('Error de conexión con el servidor');
+                console.error(e);
+            } finally {
+                btn.classList.remove('loading');
+                btn.textContent = 'Entrar';
             }
         }
-        
-        async function testAPI() {
+
+        async function verifySession(token) {
             try {
-                const res = await fetch(API + '/api/status');
-                const data = await res.json();
-                document.getElementById('test-result').innerHTML = 
-                    '<span style="color: #0f0">✅ Backend OK: ' + data.bot + '</span>';
+                const res = await fetch(`${API}/api/verify`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                if(res.ok) {
+                    sessionToken = token;
+                    showPanel();
+                } else {
+                    sessionStorage.removeItem('admin_token');
+                }
             } catch(e) {
-                document.getElementById('test-result').innerHTML = 
-                    '<span style="color: #f00">❌ Error: ' + e.message + '</span>';
+                console.error('Error verificando sesión');
             }
+        }
+
+        function showPanel() {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('panel').style.display = 'block';
+            loadPanelData();
+        }
+
+        async function loadPanelData() {
+            // Ejemplo: cargar datos reales verificados por backend
+            try {
+                const res = await fetch(`${API}/api/admin/data`, {
+                    headers: {'Authorization': `Bearer ${sessionToken}`}
+                });
+                const data = await res.json();
+                document.getElementById('panel-content').innerHTML = 
+                    `<p>Datos cargados: ${data.count} registros</p>`;
+            } catch(e) {
+                document.getElementById('panel-content').innerHTML = 
+                    '<p>Error cargando datos</p>';
+            }
+        }
+
+        function doLogout() {
+            sessionStorage.removeItem('admin_token');
+            location.reload();
+        }
+
+        function showError(msg) {
+            document.getElementById('error').textContent = msg;
+            setTimeout(() => {
+                document.getElementById('error').textContent = '';
+            }, 3000);
         }
     </script>
 </body>
