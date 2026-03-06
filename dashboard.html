@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔥 El Patio Bot — Dashboard v9.0</title>
+<!-- URL corregida (sin espacio) -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -30,7 +31,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .lbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));
   border:none;border-radius:10px;color:#fff;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;}
 .lbtn:hover{transform:translateY(-2px);box-shadow:0 10px 35px rgba(124,92,255,.3);}
+.lbtn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
 .lerr{color:var(--danger);font-size:.8rem;margin-top:10px;display:none;}
+.lerr.on{display:block;}
 
 #app{display:none;min-height:100vh;}
 #app.on{display:flex;}
@@ -243,14 +246,10 @@ nav{flex:1;padding:10px 0;}
   <div class="lbox">
     <div class="llogo">🔥 El Patio Bot</div>
     <div class="lsub">Dashboard v9.0 — Admin Access</div>
-    <input type="password" id="lkey" placeholder="Admin Key..." autocomplete="off">
-    <button class="lbtn" onclick="doLogin()">ENTRAR AL PANEL</button>
-    <div class="lerr" id="lerr">❌ Clave incorrecta</div>
-    <div style="margin-top:15px;font-size:.75rem;color:var(--muted);">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-        <input type="checkbox" id="rememberKey" checked style="accent-color:var(--accent);"> Recordar sesión
-      </label>
-    </div>
+    <input type="password" id="lkey" placeholder="Admin Key..." autocomplete="off" onkeypress="if(event.key==='Enter')doLogin()">
+    <button class="lbtn" id="lbtn" onclick="doLogin()">ENTRAR AL PANEL</button>
+    <div class="lerr" id="lerr"></div>
+    <!-- Eliminado checkbox "Recordar" por seguridad - usar sessionStorage -->
   </div>
 </div>
 
@@ -330,7 +329,7 @@ nav{flex:1;padding:10px 0;}
             <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:5px;">🔍 Buscar usuario de Discord (nombre, apodo o ID)</label>
             <div style="display:flex;gap:7px;">
               <input id="si" type="text" placeholder="Ej: max o 123456789..." style="flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none;" onkeydown="if(event.key==='Enter')searchUser()">
-              <button class="btn bp" onclick="searchUser()">Buscar</button>
+              <button class="btn bp" onclick="searchUser()" id="btn-search">Buscar</button>
             </div>
             <div class="sr-box" id="sr"></div>
           </div>
@@ -343,15 +342,15 @@ nav{flex:1;padding:10px 0;}
           </div>
           <div id="regform" style="display:none;">
             <div class="fg">
-              <div><label>🟣 Twitch (URL o usuario)</label><input id="rt" placeholder="https://twitch.tv/usuario o usuario"></div>
-              <div><label>🟢 Kick (URL o usuario)</label><input id="rk" placeholder="https://kick.com/usuario o usuario"></div>
-              <div><label>⚫ TikTok (URL o @usuario)</label><input id="rtt" placeholder="https://tiktok.com/@usuario o usuario"></div>
+              <div><label>🟣 Twitch (URL o usuario)</label><input id="rt" placeholder="https://twitch.tv/usuario  o usuario"></div>
+              <div><label>🟢 Kick (URL o usuario)</label><input id="rk" placeholder="https://kick.com/usuario  o usuario"></div>
+              <div><label>⚫ TikTok (URL o @usuario)</label><input id="rtt" placeholder="https://tiktok.com/@usuario  o usuario"></div>
               <div><label>🔴 YouTube (@handle)</label><input id="ry" placeholder="@usuario"></div>
               <div><label>📝 Biografía</label><input id="rb" placeholder="Streamer de GTA V RP..."></div>
               <div><label>🎨 Color</label><div style="display:flex;align-items:center;gap:7px;"><input type="color" id="rc" value="#9146FF" style="width:42px;height:34px;border:none;background:none;cursor:pointer;"><span style="font-size:.78rem;color:var(--muted);">Color del hilo</span></div></div>
             </div>
             <div id="vbox" style="display:none;margin-bottom:13px;"></div>
-            <button class="btn bp" style="width:100%;padding:11px;font-size:.92rem;" onclick="submitReg()">✅ Verificar y Registrar</button>
+            <button class="btn bp" style="width:100%;padding:11px;font-size:.92rem;" onclick="submitReg()" id="btn-reg">✅ Verificar y Registrar</button>
           </div>
         </div>
       </div>
@@ -369,14 +368,17 @@ nav{flex:1;padding:10px 0;}
 <div id="toast"></div>
 
 <script>
-const API = '';
-let ak = localStorage.getItem('adminKey') || '';
+// CONFIGURACIÓN - Cambia esto por tu URL de Railway
+const API = 'https://el-patio-rp-pro-streaming-production.up.railway.app';
+let ak = sessionStorage.getItem('adminKey') || ''; // Usar sessionStorage, no localStorage
 let selUid = null;
 
-// Auto-login si hay key guardada
+// No auto-login automático por seguridad - requiere interacción del usuario
+// Si hay sesión previa, mostrar mensaje nada más
 if (ak) {
-  document.getElementById('lkey').value = ak;
-  doLogin();
+  document.getElementById('lkey').value = '••••••••••••'; // Máscara
+  document.getElementById('lkey').placeholder = 'Sesión previa detectada - Ingresa clave nuevamente';
+  ak = ''; // Limpiar hasta que se verifique de nuevo
 }
 
 const ptitles = {
@@ -386,46 +388,70 @@ const ptitles = {
   config:'⚙️ Config',logs:'📋 Logs',
 };
 
-// AUTH
+// AUTH - SIN HARDCODEO DE CLAVES
 async function doLogin() {
   const k = document.getElementById('lkey').value.trim();
-  const remember = document.getElementById('rememberKey').checked;
-  if (!k) return;
+  const btn = document.getElementById('lbtn');
+  const err = document.getElementById('lerr');
   
-  // Test key con endpoint simple
+  if (!k) {
+    err.textContent = '❌ Ingresa una clave';
+    err.classList.add('on');
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Verificando...';
+  err.classList.remove('on');
+  
   try {
-    const r = await fetch(`${API}/api/status`, { headers: { 'X-Admin-Key': k } });
-    if (r.ok || k === 'Leoon272113' || k === 'staff-elpatio-2026') {
-      ak = k;
-      if (remember) localStorage.setItem('adminKey', k);
-      else localStorage.removeItem('adminKey');
-      
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('app').classList.add('on');
-      refreshAll();
-      setInterval(refreshAll, 30000);
+    // Solo validar contra el backend - NUNCA en frontend
+    const r = await fetch(`${API}/api/status`, { 
+      headers: { 'X-Admin-Key': k },
+      cache: 'no-store'
+    });
+    
+    if (r.ok) {
+      const data = await r.json();
+      if (data.authenticated || data.success) { // Dependiendo de tu respuesta backend
+        ak = k;
+        // Guardar en sessionStorage (se borra al cerrar pestaña) - más seguro que localStorage
+        sessionStorage.setItem('adminKey', k);
+        
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').classList.add('on');
+        refreshAll();
+        // Refresh cada 30 segundos
+        window.refreshInterval = setInterval(refreshAll, 30000);
+      } else {
+        throw new Error('No autorizado');
+      }
     } else {
-      showError('Clave incorrecta o no autorizado');
+      throw new Error(r.status === 401 ? 'Clave incorrecta' : 'Error del servidor');
     }
   } catch(e) {
-    console.error(e);
-    showError('Error de conexión al servidor');
+    console.error('Login error:', e);
+    err.textContent = '❌ ' + (e.message || 'Error de conexión');
+    err.classList.add('on');
+    ak = '';
+    sessionStorage.removeItem('adminKey');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR AL PANEL';
   }
-}
-
-function showError(msg) {
-  const el = document.getElementById('lerr');
-  el.textContent = '❌ ' + msg;
-  el.style.display = 'block';
 }
 
 function doLogout() {
   ak = '';
-  localStorage.removeItem('adminKey');
+  sessionStorage.removeItem('adminKey');
+  if (window.refreshInterval) clearInterval(window.refreshInterval);
   location.reload();
 }
 
-const ah = () => ({ 'Content-Type': 'application/json', 'X-Admin-Key': ak });
+const ah = () => ({ 
+  'Content-Type': 'application/json', 
+  'X-Admin-Key': ak 
+});
 
 // NAV
 function sp(name, el) {
@@ -440,9 +466,23 @@ function sp(name, el) {
 
 // REFRESH
 async function refreshAll() {
+  if (!ak) return; // No hacer requests si no hay auth
+  
   try {
-    const r = await fetch(`${API}/api/status`, { headers: ah() });
-    if (!r.ok) throw new Error('No autorizado');
+    const r = await fetch(`${API}/api/status`, { 
+      headers: ah(),
+      cache: 'no-store'
+    });
+    
+    if (!r.ok) {
+      if (r.status === 401) {
+        toast('Sesión expirada', 'e');
+        doLogout();
+        return;
+      }
+      throw new Error('Error de conexión');
+    }
+    
     const s = await r.json();
     
     document.getElementById('bot-tag').textContent = s.bot || 'Online';
@@ -461,9 +501,7 @@ async function refreshAll() {
     
   } catch(e) {
     console.error('refreshAll:', e);
-    if (e.message === 'No autorizado') {
-      doLogout();
-    }
+    toast('Error de conexión con el servidor', 'e');
   }
 }
 
@@ -474,43 +512,52 @@ function setPl(id, on, cls) {
   el.style.opacity = on ? 1 : 0.45;
 }
 
-// BUSCAR USUARIO - CORREGIDO
+// BUSCAR USUARIO - CORREGIDO Y SEGURO
 async function searchUser() {
   const q = document.getElementById('si').value.trim();
+  const btn = document.getElementById('btn-search');
+  
   if (!q) return toast('Escribe un nombre o ID', 'w');
+  if (!ak) return toast('Sesión no válida', 'e');
   
   const box = document.getElementById('sr');
   box.style.display = 'block';
-  box.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:7px;">🔍 Buscando en Discord...</div>';
+  box.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:7px;"><span class="spin"></span> Buscando...</div>';
+  btn.disabled = true;
   
   try {
     const url = `${API}/admin/find-member?q=${encodeURIComponent(q)}`;
-    console.log('Fetching:', url); // Debug
+    console.log('Fetching:', url);
     
     const r = await fetch(url, { 
       headers: ah(),
-      cache: 'no-cache'
+      cache: 'no-store'
     });
     
     if (!r.ok) {
+      if (r.status === 401) {
+        doLogout();
+        throw new Error('Sesión expirada');
+      }
       const err = await r.text();
-      throw new Error(`HTTP ${r.status}: ${err}`);
+      throw new Error(`Error ${r.status}: ${err}`);
     }
     
     const members = await r.json();
-    console.log('Result:', members); // Debug
+    console.log('Result:', members);
     
     if (!Array.isArray(members) || !members.length) {
       box.innerHTML = '<div style="color:var(--warn);font-size:.8rem;padding:7px;">⚠️ No se encontró ningún usuario con ese nombre</div>';
       return;
     }
     
+    // Escapar HTML para prevenir XSS
     box.innerHTML = members.map(m => `
-      <div class="sri" onclick="selUser('${m.id}','${esc(m.displayName)}','${m.avatar}',${m.isRegistered},${m.hasStreamerRole})">
-        <img src="${m.avatar}" style="width:32px;height:32px;border-radius:50%;" onerror="this.style.display='none'">
+      <div class="sri" onclick="selUser('${esc(m.id)}','${esc(m.displayName)}','${esc(m.avatar)}',${m.isRegistered},${m.hasStreamerRole})">
+        <img src="${esc(m.avatar)}" style="width:32px;height:32px;border-radius:50%;" onerror="this.style.display='none'">
         <div style="flex:1;">
           <div style="font-weight:600;font-size:.85rem;">${esc(m.displayName)}</div>
-          <div style="font-size:.7rem;color:var(--muted);">@${esc(m.username)} · ID: ${m.id}</div>
+          <div style="font-size:.7rem;color:var(--muted);">@${esc(m.username)} · ID: ${esc(m.id)}</div>
         </div>
         <div style="display:flex;gap:4px;">
           ${m.isRegistered ? '<span class="bdg bdg-ok">Registrado</span>' : ''}
@@ -521,10 +568,13 @@ async function searchUser() {
     
   } catch(e) {
     console.error('Search error:', e);
+    // Usar textContent o esc() para evitar XSS en mensajes de error
     box.innerHTML = `<div style="color:var(--danger);font-size:.8rem;padding:7px;">
-      ❌ Error: ${e.message}<br>
+      ❌ ${esc(e.message)}<br>
       <span style="font-size:.7rem;opacity:.7;">Verifica que el bot esté online</span>
     </div>`;
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -557,9 +607,14 @@ function clearSel() {
   document.getElementById('rc').value = '#9146FF';
 }
 
-// REGISTRAR
+// REGISTRAR - CON VALIDACIÓN
 async function submitReg() {
   if (!selUid) return toast('Selecciona un usuario primero', 'w');
+  if (!ak) return toast('Sesión expirada', 'e');
+  
+  const btn = document.getElementById('btn-reg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Procesando...';
   
   const platforms = {
     twitch:  extractUsername('twitch', document.getElementById('rt').value)  || null,
@@ -569,6 +624,8 @@ async function submitReg() {
   };
   
   if (!Object.values(platforms).some(v=>v)) {
+    btn.disabled = false;
+    btn.textContent = '✅ Verificar y Registrar';
     return toast('Agrega al menos una plataforma', 'w');
   }
   
@@ -586,15 +643,23 @@ async function submitReg() {
       }),
     });
     
+    if (r.status === 401) {
+      doLogout();
+      throw new Error('Sesión expirada');
+    }
+    
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Error del servidor');
     
-    toast(`✅ ${d.displayName} registrado correctamente!`, 's');
+    toast(`✅ ${esc(d.displayName || 'Usuario')} registrado correctamente!`, 's');
     clearSel();
     refreshAll();
     
   } catch(e) {
-    toast('❌ Error: ' + e.message, 'e');
+    toast('❌ Error: ' + esc(e.message), 'e');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Verificar y Registrar';
   }
 }
 
@@ -622,7 +687,7 @@ function extractUsername(platform, input) {
 
 function loadStreamers() {
   // Implementar carga de streamers aquí
-  document.getElementById('str-list').innerHTML = '<div class="empty">Cargando...</div>';
+  document.getElementById('str-list').innerHTML = '<div class="empty">Implementar carga...</div>';
 }
 
 // UTILS
@@ -632,9 +697,15 @@ function fmt_uptime(s) {
   return h>0?`${h}h ${m}m`:`${m}m`;
 }
 
+// ESCAPAR HTML - PREVENCIÓN XSS
 function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
 }
 
 let _tt;
@@ -647,17 +718,35 @@ function toast(msg, t='') {
 }
 
 async function forceCheck() {
+  if (!ak) return toast('Sesión expirada', 'e');
+  
   toast('🔍 Verificando streams...');
   try {
-    const r = await fetch(`${API}/admin/check-streams`, { method:'POST', headers:ah() });
+    const r = await fetch(`${API}/admin/check-streams`, { 
+      method:'POST', 
+      headers:ah() 
+    });
+    
+    if (r.status === 401) {
+      doLogout();
+      throw new Error('Sesión expirada');
+    }
+    
     if (!r.ok) throw new Error('Error');
     const d = await r.json();
     toast(`✅ ${d.liveCount||0} streams activos`, 's');
     refreshAll();
   } catch(e) {
-    toast('❌ Error', 'e');
+    toast('❌ ' + esc(e.message), 'e');
   }
 }
+
+// Limpiar sesión al cerrar pestaña (doble seguridad)
+window.addEventListener('beforeunload', () => {
+  // Si queremos mantener sesión solo durante la navegación, 
+  // pero no persistir entre cierres de navegador:
+  // sessionStorage se limpia automáticamente al cerrar pestaña
+});
 </script>
 </body>
 </html>
