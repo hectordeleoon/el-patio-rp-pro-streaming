@@ -1,25 +1,48 @@
 {
   "name": "el-patio-bot-stream",
-  "version": "8.3.0",
-  "description": "El Patio Bot Stream - Notificador de streams con IA para Twitch, Kick, TikTok, YouTube",
+  "version": "9.5.0",
+  "description": "El Patio Bot Stream v9.5 - Notificador de streams con IA para Twitch, Kick, TikTok, YouTube con Dashboard Web",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "install:prod": "npm install --omit=dev"
+    "test": "echo \"Error: no test specified\" && exit 0"
   },
   "dependencies": {
     "@discordjs/rest": "^2.3.0",
     "axios": "^1.7.2",
-    "discord-api-types": "^0.37.0",
+    "discord-api-types": "^0.37.93",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   },
-  "keywords": ["discord-bot", "twitch", "kick", "tiktok", "youtube", "stream-notifications", "groq", "ia"],
+  "engines": {
+    "node": "18.x || 20.x",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "discord-bot",
+    "twitch",
+    "kick", 
+    "tiktok",
+    "youtube",
+    "stream-notifications",
+    "groq",
+    "ia",
+    "railway",
+    "el-patio-rp"
+  ],
   "author": "El Patio RP",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/el-patio-bot-stream.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/el-patio-bot-stream/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/el-patio-bot-stream#readme"
 }
